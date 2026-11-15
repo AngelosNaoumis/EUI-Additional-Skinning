@@ -1,4 +1,4 @@
-## Interface: 16001, 120000, 120001, 120005, 120007, 120100
+## Interface: 16001
 ## Title: EUI Additional Skinning
 ## Notes: EllesmereUI skins for Altoholic, Attune, Auctionator, BugSack, Forever Dungeon Journal, Naowh Forever, OneForAll and What's Training?.
 ## Author: AngelosNaoumis

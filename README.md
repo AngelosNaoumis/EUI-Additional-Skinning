@@ -1,6 +1,6 @@
 # EUI Additional Skinning
 
-Skins some some EllesmereUI function and additionally skins some skins below.
+Skins some EllesmereUI functions and additionally skins the addons below.
 
 ## Supported addons
 
@@ -20,7 +20,7 @@ A skin's code runs only when its addon is enabled and loaded; otherwise it costs
 
 ## Requirements
 
-- World of Warcraft Forever (interface 16001; the TOC also lists the 12.x interfaces).
+- World of Warcraft Forever (interface 16001).
 - **EllesmereUI** (required). **EllesmereUI Blizzard Skins+** (`EllesmereUIBlizzardSkin`) for the
   window skins; without it only the Naowh Forever colours, fonts and borders apply.
 
