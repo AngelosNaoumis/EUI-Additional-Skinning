@@ -30,6 +30,24 @@ A skin's code runs only when its addon is enabled and loaded; otherwise it costs
 2. Copy its `EUIAdditionalSkinning` folder into `Interface/AddOns`. That folder is the whole addon;
    everything else in the repository is for development.
 
+### Optional: chat bubble style (`Tooltips.zip`)
+
+`Tooltips.zip` holds three chat bubble styles. Pick the one you prefer:
+
+| Folder in the zip | Style |
+| --- | --- |
+| `Tooltips-Gray+Dark - Recomended` | Gray border, dark background (recommended) |
+| `Tooltips-Brown+Dark` | Brown border, dark background |
+| `Tooltips-Brown` | Brown |
+
+1. Extract `Tooltips.zip` and open the style folder you chose.
+2. Copy the `Tooltips` folder inside it into `Interface` (next to `AddOns`, not inside it), so you
+   end up with `Interface/Tooltips/ChatBubble.tga` and `Interface/Tooltips/ChatBubbleVertical.tga`.
+3. Restart the game (a `/reload` does not pick up new texture files).
+
+To switch styles, replace the `Interface/Tooltips` folder with another style's. To go back to the
+default look, delete `Interface/Tooltips`.
+
 ## Configuration
 
 EUI's options panel has an **Additional Skinning** section (`/eas options`):
