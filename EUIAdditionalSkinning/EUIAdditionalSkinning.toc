@@ -1,0 +1,31 @@
+## Interface: 16001, 120000, 120001, 120005, 120007, 120100
+## Title: EUI Additional Skinning
+## Notes: EllesmereUI skins for Altoholic, Attune, Auctionator, BugSack, Forever Dungeon Journal, Naowh Forever, OneForAll and What's Training?.
+## Author: AngelosNaoumis
+## X-License: MIT
+## Version: 2.0.0
+## Dependencies: EllesmereUI
+## OptionalDeps: EllesmereUIBlizzardSkin, EllesmereUIActionBars, EllesmereUIFriends, EllesmereUIBags
+## SavedVariables: EUIAdditionalSkinningDB
+
+Catalog.lua
+Core.lua
+Accent.lua
+Widgets.lua
+Helpers.lua
+Skin.lua
+Scoped.lua
+Menus.lua
+Dev.lua
+Integrations\NaowhForever\Config.lua
+Integrations\NaowhForever\Auras.lua
+Integrations\NaowhForever\Runtime.lua
+Integrations\NaowhForever\Options.lua
+Options.lua
+Skins\Altoholic.lua
+Skins\Attune.lua
+Skins\Auctionator.lua
+Skins\BugSack.lua
+Skins\ForeverDungeonJournal.lua
+Skins\OneForAll.lua
+Skins\WhatsTraining.lua
