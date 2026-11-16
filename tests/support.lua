@@ -162,6 +162,7 @@ function Frame:GetFrameStrata() return self.strata or 'MEDIUM' end
 function Frame:GetRect() if self.rect then return table.unpack(self.rect) end end
 function Frame:GetEffectiveAlpha() return (self.alpha or 1) * (self.parent and self.parent:GetEffectiveAlpha() or 1) end
 function Frame:SetFrameLevel(level) self.level = level end
+function Frame:SetFrameStrata(strata) self.strata = strata end
 function Frame:GetEffectiveScale() return 1 end
 function Frame:GetAlpha() return self.alpha or 1 end
 function Frame:SetAlpha(a) self.alpha = a end

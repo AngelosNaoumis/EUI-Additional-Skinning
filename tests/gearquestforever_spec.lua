@@ -12,6 +12,7 @@ _G.GearQuest = {Log = {Init = Method('Init'), Show = Method('Show'), Refresh = M
 -- GearQuestLogFrame (PortraitFrameTemplate), as Log:Init builds it.
 UIParent = T.Frame('Frame', nil, 'UIParent')
 local window = T.Frame('Frame', nil, 'GearQuestLogFrame')
+window:SetFrameStrata('DIALOG'); window:SetFrameLevel(100)
 window.CloseButton = T.Frame('Button', window); window.CloseButton.width, window.CloseButton.height = 32, 32
 window.PortraitContainer = T.Frame('Frame', window)
 window.PortraitContainer:SetPoint('TOPLEFT', window, 'TOPLEFT', -6, 7)
@@ -60,8 +61,12 @@ window.gqOuterBorder = T.Frame('Frame', window); window.gqOuterBorder.backdrop =
 window.sideTabRail = T.Frame('Frame')
 local page = 'log'
 local sideClicks, sideEnters, sideLeaves = {}, {}, {}
+local strataWrites = 0
 for _, key in ipairs({'tabLog', 'tabLookup', 'tabSimulator', 'tabSettings'}) do
     local button = T.Frame('Button', window.sideTabRail)
+    button:EnableMouse(true)
+    local setFrameStrata = button.SetFrameStrata
+    button.SetFrameStrata = function(self, strata) strataWrites = strataWrites + 1; setFrameStrata(self, strata) end
     sideClicks[key], sideEnters[key], sideLeaves[key] = function() end, function() end, function() end
     button:SetScript('OnClick', sideClicks[key]); button:SetScript('OnEnter', sideEnters[key]); button:SetScript('OnLeave', sideLeaves[key])
     window[key] = button
@@ -73,11 +78,13 @@ local function NativeLayoutSideTabs()
     window.sideTabRail:ClearAllPoints()
     window.sideTabRail:SetPoint('TOPLEFT', window, 'TOPRIGHT', -8, -123)
     window.sideTabRail:SetSize(53, 242)
+    window.sideTabRail:SetFrameStrata('DIALOG'); window.sideTabRail:SetFrameLevel(105)
     for index, key in ipairs(sideKeys) do
         local button = window[key]
         button:ClearAllPoints()
         button:SetPoint('TOPLEFT', window.sideTabRail, 'TOPLEFT', 0, -(index - 1) * 63)
         button:SetSize(53, 53)
+        button:SetFrameLevel(page == sidePages[index] and 112 or 106)
         button.nativeSelected = page == sidePages[index]
     end
 end
@@ -148,6 +155,9 @@ for index, key in ipairs({'tabLog', 'tabLookup', 'tabSimulator', 'tabSettings'})
     assert(button:GetScript('OnClick') == sideClicks[key] and button:GetScript('OnEnter') == sideEnters[key]
         and button:GetScript('OnLeave') == sideLeaves[key],
         'right-side tab action or tooltip script changed')
+    assert(window:GetFrameStrata() == 'DIALOG' and window.sideTabRail:GetFrameStrata() == 'DIALOG'
+        and button:GetFrameStrata() == 'HIGH', 'right-side tab is not layered behind the main window')
+    assert(button:IsMouseEnabled(), 'visible right-side tab is not interactive')
     assert(not button.skin.Button and not button.skin.SquareIcon, 'right-side tab received duplicate EUI artwork')
 end
 
@@ -174,6 +184,7 @@ for round = 1, 3 do
                 'right-side tab moved or resized during repeated navigation')
             assert(button.nativeSelected == (sidePages[index] == nextPage),
                 'native selected-state update was not preserved')
+            assert(button:GetFrameStrata() == 'HIGH', 'page navigation moved a side tab in front of the window')
             assert(button:GetScript('OnClick') == sideClicks[key]
                 and button:GetScript('OnEnter') == sideEnters[key]
                 and button:GetScript('OnLeave') == sideLeaves[key],
@@ -183,6 +194,7 @@ for round = 1, 3 do
 end
 assert(calls.LayoutSideTabs == 13 and calls.SetPageTab == 12,
     'repeated navigation did not exercise every native layout pass')
+assert(strataWrites == 4, 'side-tab strata was repeatedly rewritten during navigation or refresh')
 assert(not row.skin.Button and not tab.skin.Button, 'hunt row or tab boxed (their fill shows selection and quality)')
 assert(thumb.width == 8 and thumb.height == 14, 'horizontal slider not styled')
 

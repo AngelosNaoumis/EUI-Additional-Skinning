@@ -8,6 +8,8 @@ local PORTRAIT_X, PORTRAIT_Y = 8, -8
 local NATIVE_PORTRAIT_X, NATIVE_PORTRAIT_Y = -6, 7
 local alignedWashes = setmetatable({}, {__mode = "k"})
 local dragHooked = setmetatable({}, {__mode = "k"})
+local layeredTabs = setmetatable({}, {__mode = "k"})
+local SIDE_TABS = {"tabLog", "tabLookup", "tabSimulator", "tabSettings"}
 
 local function Anchor(frame, point, relative, relativePoint, x, y)
     if not (frame and frame.GetPoint and frame.GetNumPoints and frame.ClearAllPoints and frame.SetPoint) then return end
@@ -55,6 +57,21 @@ local function FillAnimatedButton(button)
     wash:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -2, 2)
 end
 
+local function LayerSideTabs(frame)
+    if not frame then return end
+    for _, key in ipairs(SIDE_TABS) do
+        local tab = frame[key]
+        if tab and tab.SetFrameStrata and not layeredTabs[tab] then
+            -- GearQuest's rail is reparented to UIParent on DIALOG and its page changes keep
+            -- rewriting button levels. An explicit lower strata survives those native level and
+            -- geometry updates, so the DIALOG window covers only the eight-pixel overlap while
+            -- the exposed HIGH-strata portion remains interactive.
+            layeredTabs[tab] = true
+            tab:SetFrameStrata("HIGH")
+        end
+    end
+end
+
 ns.Skin("GearQuestForever", {
     label = "GearQuest Forever",
     available = function() local gq = _G.GearQuest; return type(gq) == "table" and gq.Log ~= nil end,
@@ -85,6 +102,7 @@ ns.Skin("GearQuestForever", {
                 if name == "GearQuestLogFrame" then
                     PositionPortrait(f, gq and gq.PortraitGuide)
                     PositionGuideBubble(gq and gq.PortraitGuide, f)
+                    LayerSideTabs(f)
                     if not dragHooked[f] then
                         dragHooked[f] = true
                         C.H.Script(f, "OnDragStop", PositionMainGuideBubble)
