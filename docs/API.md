@@ -64,18 +64,19 @@ How to use these in a skin: [SKIN-DEVELOPMENT.md](../SKIN-DEVELOPMENT.md).
 | `H.Pixel(f)` | One physical pixel at the frame's scale. | `Helpers.lua:15` |
 | `H.Shift(f, dx, dy)` | Move a frame by an offset, keeping every anchor. | `Helpers.lua:20` |
 | `H.Artwork(f)` | Foreground art (spinners, icons) on a panel, with its alpha, to restore after a fade. | `Helpers.lua:27` |
-| `H.Strip(f)` | Strip an inset or list panel to nothing, keeping its foreground art. Once per frame. | `Helpers.lua:38` |
-| `H.Wash(f)` | EUI's results wash: a 2% white fill edged by 1px seams on the top and left. It sits on a child layer because EUI restrips the frame's own textures. Once per frame. | `Helpers.lua:47` |
-| `H.ScrollBar(bar)` | Scroll bars of both generations: classic Slider bars, and WowTrimScrollBar whose end caps sit on the bar itself and whose track art sits on a Background child. | `Helpers.lua:65` |
-| `H.Glyph(button)` | EUI's refresh glyph: the button's own art faded, a desaturated white refresh icon on top. Without the atlas the button stays native rather than going blank. | `Helpers.lua:78` |
-| `H.Squared(f, icon, inset)` | Square, inset icon on a pooled button, re-applied whenever the button is refilled. | `Helpers.lua:104` |
-| `H.Pooled(box, styleRow)` | Restyle a ScrollBox's rows whenever it refills them (rows are pooled and reused); only this box is touched, not a whole skin pass. | `Helpers.lua:117` |
-| `H.Ace(f, refresh)` | AceGUI widget frames (f.obj.frame == f): style the dropdown or checkbox the widget wraps, recheck on SetType/SetDisabled. True when f was such a widget; ns.Skin's ace flag uses it. | `Helpers.lua:124` |
-| `H.ThinBackdrop(f)` | Re-draw a backdrop frame with a 1px flat edge, keeping its colours (and again if the addon resets it). | `Helpers.lua:160` |
-| `H.Selection(f, selected)` | A flat button with an accent fill while selected (tree rows, list entries). | `Helpers.lua:179` |
-| `H.Toggle(f, expanded)` | An expand/collapse button drawn as a "+" or "-" glyph over its faded art. | `Helpers.lua:192` |
-| `H.Portrait(f, player, noAccent, size)` | A window's round portrait replaced by a square one (player = the player's portrait); returns the icon. size: its side in pixels (default 28), centred in EUI's 25px title strip when it fits. | `Helpers.lua:211` |
-| `H.Resize(f, force)` | A size-grabber's art faded and replaced by a small "+" (force: fade every texture). | `Helpers.lua:239` |
+| `H.Readable(text)` | Text drawn for a light page (parchment, spellbook ink) made readable on EUI's dark panels: a dark colour (luminance under 0.3) turns white when near-grey, else a light tint of its hue. Light and coloured text (rarity, class, gold) is left alone. Compared before writing. | `Helpers.lua:40` |
+| `H.Strip(f)` | Strip an inset or list panel to nothing, keeping its foreground art. Once per frame. | `Helpers.lua:51` |
+| `H.Wash(f)` | EUI's results wash: a 2% white fill edged by 1px seams on the top and left. It sits on a child layer because EUI restrips the frame's own textures. Once per frame. | `Helpers.lua:60` |
+| `H.ScrollBar(bar)` | Scroll bars of both generations: classic Slider bars, and WowTrimScrollBar whose end caps sit on the bar itself and whose track art sits on a Background child. | `Helpers.lua:78` |
+| `H.Glyph(button)` | EUI's refresh glyph: the button's own art faded, a desaturated white refresh icon on top. Without the atlas the button stays native rather than going blank. | `Helpers.lua:91` |
+| `H.Squared(f, icon, inset)` | Square, inset icon on a pooled button, re-applied whenever the button is refilled. | `Helpers.lua:117` |
+| `H.Pooled(box, styleRow)` | Restyle a ScrollBox's rows whenever it refills them (rows are pooled and reused); only this box is touched, not a whole skin pass. | `Helpers.lua:130` |
+| `H.Ace(f, refresh)` | AceGUI widget frames (f.obj.frame == f): style the dropdown or checkbox the widget wraps, recheck on SetType/SetDisabled. True when f was such a widget; ns.Skin's ace flag uses it. | `Helpers.lua:137` |
+| `H.ThinBackdrop(f)` | Re-draw a backdrop frame with a 1px flat edge, keeping its colours (and again if the addon resets it). | `Helpers.lua:173` |
+| `H.Selection(f, selected)` | A flat button with an accent fill while selected (tree rows, list entries). | `Helpers.lua:192` |
+| `H.Toggle(f, expanded)` | An expand/collapse button drawn as a "+" or "-" glyph over its faded art. | `Helpers.lua:205` |
+| `H.Portrait(f, player, noAccent, size)` | A window's round portrait replaced by a square one (player = the player's portrait); returns the icon. size: its side in pixels (default 28), centred in EUI's 25px title strip when it fits. | `Helpers.lua:224` |
+| `H.Resize(f, force)` | A size-grabber's art faded and replaced by a small "+" (force: fade every texture). | `Helpers.lua:252` |
 
 ## Accent.lua
 

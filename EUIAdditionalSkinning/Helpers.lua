@@ -34,6 +34,19 @@ function ns.AddSkinHelpers(H, S)
         end
         return artwork
     end
+    -- Text drawn for a light page (parchment, spellbook ink) made readable on EUI's dark panels: a
+    -- dark colour (luminance under 0.3) turns white when near-grey, else a light tint of its hue.
+    -- Light and coloured text (rarity, class, gold) is left alone. Compared before writing.
+    function H.Readable(text)
+        if not text or not text.GetTextColor or not text.SetTextColor then return end
+        local r, g, b, a = text:GetTextColor()
+        if type(r) ~= "number" or (issecretvalue and issecretvalue(r)) then return end
+        if r * 0.299 + g * 0.587 + b * 0.114 >= 0.3 then return end
+        local high, low = math.max(r, g, b), math.min(r, g, b)
+        if high - low < 0.2 or high <= 0 then text:SetTextColor(1, 1, 1, a); return end
+        r, g, b = r / high, g / high, b / high
+        text:SetTextColor(r + (1 - r) * 0.4, g + (1 - g) * 0.4, b + (1 - b) * 0.4, a)
+    end
     -- Strip an inset or list panel to nothing, keeping its foreground art. Once per frame.
     function H.Strip(f)
         if not H.Allowed(f) or not H.Once(f, "strip") then return end
