@@ -323,7 +323,7 @@ assert(count == 1, 'C: reuse created another border host')
 
 
 -- 7. EllesmereUI window and bag borders are independent of Naowh Forever (Skins page toggles).
-local function EuiCase(db, naowhLoaded)
+local function EuiCase(db, naowhLoaded, forbiddenChild)
     local T = dofile('tests/support.lua'); Setup(T)
     EUIAdditionalSkinningDB = db
     local applied = {}
@@ -337,6 +337,11 @@ local function EuiCase(db, naowhLoaded)
     T.loaded.EllesmereUIBlizzardSkin = true
     T.Fire('PLAYER_LOGIN'); T.Flush()
     local window = T.Frame('Frame', nil, 'CharacterFrame'); window.width, window.height = 400, 500
+    if forbiddenChild then
+        -- A child the game forbids reading (the Trade window's money input): GetFrameLevel raises.
+        local child = T.Frame('Frame', window); child.forbidden = true
+        child.GetFrameLevel = function() error('Attempt to access forbidden object') end
+    end
     WSkin.Shell('character', window, {})
     T.Flush()
     for _, child in ipairs(window.children) do if applied[child] then return true end end
@@ -349,6 +354,7 @@ assert(not EuiCase({euiWindows = false}, false), 'EllesmereUI window toggle off 
 assert(EuiCase({naowh = {euiWindows = false}}, false), 'a stale value under naowh still counts (only the Skins page key does)')
 assert(EuiCase({euiBags = false}, false), 'the bag toggle switched window borders')
 assert(not EuiCase({disabled = true}, false), 'master switch off still bordered')
+assert(EuiCase(nil, false, true), 'a window with a forbidden child (Trade) was not bordered, or raised')
 
 -- The toggles live on the Skins page, not the Naowh Forever page.
 T = dofile('tests/support.lua'); Setup(T)

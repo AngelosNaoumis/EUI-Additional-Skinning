@@ -113,23 +113,14 @@ local function BuildSkins(_, parent, y)
             ns.DB().debug = on and true or nil
             if not on then ns.profiling = false end
         end}); y = y - h
+    -- Button style: the default here, each addon's own beside its toggle below. Live, no reload: it
+    -- repaints the buttons already styled (Widgets.lua).
+    _, h = W:DualRow(parent, y, ButtonDefaultRow(), {type = "label", text = ""}); y = y - h
     _, h = W:Spacer(parent, y, 10); y = y - h
     _, h = W:SectionHeader(parent, "SKINS", y); y = y - h
-    local rows = {}
-    for _, entry in ipairs(ns.skinCatalog) do rows[#rows + 1] = SkinRow(entry) end
-    for index = 1, #rows, 2 do
-        _, h = W:DualRow(parent, y, rows[index], rows[index + 1] or {type = "label", text = ""}); y = y - h
-    end
-    -- Button style: the default, then each frame skin's own choice. Live, no reload: it repaints
-    -- the buttons already styled (Widgets.lua).
-    _, h = W:Spacer(parent, y, 10); y = y - h
-    _, h = W:SectionHeader(parent, "BUTTON STYLE", y); y = y - h
-    rows = {ButtonDefaultRow()}
     for _, entry in ipairs(ns.skinCatalog) do
-        if not entry.integration then rows[#rows + 1] = SkinButtonRow(entry) end
-    end
-    for index = 1, #rows, 2 do
-        _, h = W:DualRow(parent, y, rows[index], rows[index + 1] or {type = "label", text = ""}); y = y - h
+        local style = entry.integration and {type = "label", text = ""} or SkinButtonRow(entry)
+        _, h = W:DualRow(parent, y, SkinRow(entry), style); y = y - h
     end
     _, h = W:Spacer(parent, y, 10); y = y - h
     _, h = W:SectionHeader(parent, "ELLESMEREUI", y); y = y - h

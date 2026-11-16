@@ -372,7 +372,8 @@ local HighestLevel
 local function HighestChildLevel(depth, top, ...)
     for index = 1, select("#", ...) do
         local child = select(index, ...)
-        if not ours[child] then
+        -- A forbidden child (the Trade window's money input) can't be read; it is skipped.
+        if not ours[child] and not (child.IsForbidden and child:IsForbidden()) then
             local level = HighestLevel(child, depth - 1)
             if level > top then top = level end
         end

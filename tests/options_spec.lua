@@ -82,6 +82,21 @@ styleRow.setValue('gamemenu'); T.Flush()
 assert(EUIAdditionalSkinningDB.buttonStyle == 'gamemenu' and inset.shown and ffd[btn].bg.alpha == 0 and btn.ppHidden == true
     and ffd[btn].hover.all == inset and #btn.children == 1, 'switching back to the Game Menu style is not live')
 -- Without EllesmereUI's configured-border call, buttons keep the window style untouched.
+-- Each frame skin's button style sits on its toggle's row; the default above the SKINS header.
+local headerAt, defaultAt = {}, nil
+for i, row in ipairs(rows) do
+    if row.header then headerAt[row.header] = i end
+    if row[1] and row[1].text == 'Default button style' then defaultAt = i end
+end
+assert(defaultAt and defaultAt < headerAt.SKINS, 'Default button style not above the skin rows')
+for _, entry in ipairs(ns.skinCatalog) do
+    local paired
+    for _, row in ipairs(rows) do
+        if row[1] and row[1].text == entry.label then paired = row[2] and row[2].text end
+    end
+    if entry.integration then assert(paired == '', entry.label .. ' got a button style')
+    else assert(paired == entry.label .. ' buttons', entry.label .. "'s button style is not beside its toggle") end
+end
 -- Per skin: one row per frame skin (none for Naowh Forever), "Default" until set; a skin's own
 -- choice wins over the default, live; "Default" again clears it.
 for _, entry in ipairs(ns.skinCatalog) do

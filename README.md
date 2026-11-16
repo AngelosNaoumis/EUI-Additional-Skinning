@@ -53,7 +53,8 @@ default look, delete `Interface/Tooltips`.
 EUI's options panel has an **Additional Skinning** section (`/eas options`):
 
 - **Skins:** the master switch, **Enable Debug Mode** (off by default; turns on the developer
-  commands below, takes effect at once), one toggle per addon and the **Button Style** section (below). A row is locked while its addon isn't
+  commands below, takes effect at once), **Default button style**, and one row per addon: its on/off toggle and
+  its **button style**. A row is locked while its addon isn't
   enabled. Each skin also has its own toggle on EUI's Window Skins page (Third-Party Addons,
   "EUI Additional Skinning - ..."); a skin runs only when both are on. The **EllesmereUI** section
   holds **Border EllesmereUI windows** and **Border EllesmereUI bags**. Then the border settings:
@@ -71,8 +72,9 @@ EUI's options panel has an **Additional Skinning** section (`/eas options`):
 
 **Button style** (takes effect at once): **EllesmereUI windows** (default) keeps the window skins'
 dark grey button; **Game Menu** draws the buttons like EllesmereUI's Game Menu buttons, in your
-EllesmereUI **Popup Menu** button colour and border settings. The **Button Style** section sets the
-default and, per addon, **Default**, **EllesmereUI windows** or **Game Menu**.
+EllesmereUI **Popup Menu** button colour and border settings. **Default button style** (under
+General) sets it for every addon; each addon's row has its own choice: **Default**, **EllesmereUI
+windows** or **Game Menu**.
 
 Changes are saved at once; a reload is offered, and switching off needs it.
 
