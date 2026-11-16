@@ -1,7 +1,7 @@
 # EUI Additional Skinning: project guide
 
-EllesmereUI skins for Altoholic, Attune, Auctionator, BugSack, Forever Dungeon Journal, OneForAll,
-What's Training? and Naowh Forever, in one addon (WoW Forever, interface 16001). Cosmetic only, so
+EllesmereUI skins for Altoholic, Attune, Auctionator, BugSack, Forever Dungeon Journal, GearQuest
+Forever, Hunter's Field Guide, OneForAll, What's Training? and Naowh Forever, in one addon (WoW Forever, interface 16001). Cosmetic only, so
 **runtime cost is the first priority**.
 
 **Layout:** the repository's `EUIAdditionalSkinning/` folder is the addon, exactly what WoW loads
@@ -89,6 +89,8 @@ local t = C_Timer.NewTicker(1, Poll) -- lint-allow: polling until 2026-12-31 by 
 - A frame this addon creates inside a target's window (a border host, hull, backdrop) must go in
   `ns.OwnFrames` (Naowh `ours`): otherwise the window's skin walks into it and styles it (Attune
   painted our border's backdrop frame as a panel over the whole window).
+- An addon drawn for a light page (parchment, spellbook) uses dark text: on EUI's dark shell call
+  `H.Readable` on its FontStrings, and never paint a fill over its panels (fade the page art).
 - Code that inspects arbitrary frames (dev tools, `EnumerateFrames`) meets restricted frames whose
   getters return secret values: even `if f:IsVisible()` is an error that taints. Read them only
   through `Dev.lua`'s `Read`/`Value` (pcall plus `issecretvalue` on every result) and treat a

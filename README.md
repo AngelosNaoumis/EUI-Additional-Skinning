@@ -12,6 +12,8 @@ Skins some EllesmereUI functions and additionally skins the addons below.
 | [Altoholic](docs/skins/Altoholic.md) | Shells, tabs, controls, grids, calendar and achievement rows, dropdown menus. |
 | [Attune](docs/skins/Attune.md) | Windows, graph nodes, tree rows. |
 | [BugSack](docs/skins/BugSack.md) | Window, tabs, buttons. |
+| [GearQuest Forever](docs/skins/GearQuestForever.md) | Log window and simulate dialog: EllesmereUI shell, readable text, thin panel edges, menus and controls; hunt rows, tabs, icons and rarity colours kept. |
+| [Hunter's Field Guide](docs/skins/HuntersFieldGuide.md) | Journal and export window: EllesmereUI shell, readable text, panels and controls; beast entries, tabs and icons kept. |
 | [Forever Dungeon Journal](docs/skins/ForeverDungeonJournal.md) | Journal, settings, loot filter and favourites windows. |
 | [OneForAll](docs/skins/OneForAll.md) | Main frame, its sections and secondary windows, rarity borders. |
 | [What's Training?](docs/skins/WhatsTraining.md) | Window, spell icons, scroll bar. |

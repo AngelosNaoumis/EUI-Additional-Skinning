@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **New skins:** GearQuest Forever (log window, simulate dialog, menus, controls) and Hunter's Field
+  Guide (journal, export window, panels, controls), each with its own toggle on the Skins page.
 - **Button style per addon:** each addon's row on the Skins page has its own button style (Default,
   EllesmereUI windows or Game Menu) beside its toggle; **Default button style** (General) sets the
   rest. Switches at once.
