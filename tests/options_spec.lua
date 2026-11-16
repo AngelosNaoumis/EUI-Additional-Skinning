@@ -55,7 +55,7 @@ EllesmereUI._ModuleNS = {EllesmereUIBlizzardSkin = {WSkin = {GetFFD = function(f
 EllesmereUIDB = {popupMenuButtonBackgroundColor = {r = 0.54, g = 0, b = 0, a = 0.4}}
 local facade = ns.StyledFacade(T.S)
 local btn = T.Frame('Button', T.Frame('Frame')); btn.label = T.FontString(btn, 'Search')
-ffd[btn] = {bg = T.Texture(btn, 'BACKGROUND')}
+ffd[btn] = {bg = T.Texture(btn, 'BACKGROUND'), hover = T.Texture(btn, 'HIGHLIGHT')}
 facade.Button(btn)
 local inset = btn.children[1]
 assert(btn.skin.Button and inset and ns.OwnFrames[inset] and #btn.children == 1, 'no Game Menu inset (or not marked as our own frame)')
@@ -63,15 +63,16 @@ assert(inset.points[1][2] == 2 and inset.points[1][3] == -2 and inset.points[2][
 assert(inset.bg.color[1] == 0.54 and inset.bg.color[4] == 0.4, 'inset not in the Popup Menu button colour')
 assert(#borders == 1 and borders[1][1] == inset and borders[1][2] == 'popupMenuButton' and borders[1][3] == 1, 'Popup Menu border not applied')
 assert(ffd[btn].bg.alpha == 0 and btn.ppHidden == true and inset.shown, 'window fill or border still showing')
+assert(ffd[btn].hover.all == inset, 'hover wash not on the inset (it shows in the corners around the border)')
 facade.Button(btn)
 assert(#btn.children == 1 and #borders == 1, 'a second pass rebuilt the inset or the border')
 before = #popups
 styleRow.setValue('window'); T.Flush()
 assert(EUIAdditionalSkinningDB.buttonStyle == 'window' and not inset.shown and ffd[btn].bg.alpha == 1 and btn.ppHidden == false
-    and #popups == before, 'switching to the window style is not live')
+    and ffd[btn].hover.all == btn and #popups == before, 'switching to the window style is not live')
 styleRow.setValue('gamemenu'); T.Flush()
 assert(EUIAdditionalSkinningDB.buttonStyle == nil and inset.shown and ffd[btn].bg.alpha == 0 and btn.ppHidden == true
-    and #btn.children == 1, 'switching back to the Game Menu style is not live')
+    and ffd[btn].hover.all == inset and #btn.children == 1, 'switching back to the Game Menu style is not live')
 -- Without EllesmereUI's configured-border call, buttons keep the window style untouched.
 EllesmereUI._applyBlizzardConfiguredBorder = nil
 local plain = T.Frame('Button', T.Frame('Frame')); ffd[plain] = {bg = T.Texture(plain, 'BACKGROUND')}

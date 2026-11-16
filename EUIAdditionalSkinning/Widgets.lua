@@ -372,11 +372,11 @@ local function ButtonParts(btn)
     local bs = E and E._ModuleNS and E._ModuleNS.EllesmereUIBlizzardSkin
     local ws = bs and bs.WSkin
     local data = ws and ws.GetFFD and ws.GetFFD(btn)
-    return E, data and data.bg, E and (E.PanelPP or E.PP)
+    return E, data and data.bg, E and (E.PanelPP or E.PP), data and data.hover
 end
 
 local function PaintButton(btn)
-    local E, fill, pp = ButtonParts(btn)
+    local E, fill, pp, hover = ButtonParts(btn)
     local menu = ns.ButtonStyle() == "gamemenu" and E and E._applyBlizzardConfiguredBorder ~= nil
     local style = menu and "gamemenu" or "window"
     if buttonState[btn] == style then return end
@@ -401,10 +401,14 @@ local function PaintButton(btn)
         inset.bg:SetColorTexture(c.r or 0.1, c.g or 0.1, c.b or 0.1, c.a == nil and 0.8 or c.a)
         E._applyBlizzardConfiguredBorder(inset, "popupMenuButton", 1)
         inset:Show()
+        -- The hover wash covers the inset only, as on the Game Menu: on the whole button it showed
+        -- in the 2px margin around the inset's border (the corners).
+        if hover then hover:ClearAllPoints(); hover:SetAllPoints(inset) end
         if fill then fill:SetAlpha(0) end
         if pp and pp.HideBorder then pp.HideBorder(btn) end
     else
         if inset then inset:Hide() end
+        if hover and inset then hover:ClearAllPoints(); hover:SetAllPoints(btn) end
         if fill then fill:SetAlpha(1) end
         if pp and pp.ShowBorder and buttonState[btn] then pp.ShowBorder(btn) end
     end

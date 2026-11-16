@@ -51,8 +51,8 @@ How to use these in a skin: [SKIN-DEVELOPMENT.md](../SKIN-DEVELOPMENT.md).
 | `H.LegacySlider(f, keep)` | Classic Slider scroll bar: thin track, accent thumb, page arrows. | `Widgets.lua:246` |
 | `ns.CreateSoftSkin(S, module, borderless)` | Opt-in treatment for owned addon controls. Keep EUI primitives and their fills/hover states; soften only their newly created pixel-border containers. borderless(f): true for controls whose soft edge (and square-icon edge) stays hidden. | `Widgets.lua:283` |
 | `ns.ButtonStyle()` | Button style (Skins page): "gamemenu" (the default) draws every button a skin styles through the facade like EllesmereUI's Game Menu buttons: an inset 2px inside the button, filled with the Popup Menu button colour and given its configured border (the calls the Game Menu uses); EllesmereUI's window-button fill and border are hidden, not removed. "window" keeps EllesmereUI's window button. Switching is live (ns.RefreshButtonStyle). Without those EllesmereUI calls every button keeps the window style. | `Widgets.lua:362` |
-| `ns.StyledFacade(S)` | The facade a skin receives, with S.Button drawing the chosen button style afterwards. | `Widgets.lua:415` |
-| `ns.RefreshButtonStyle()` | Re-draws every styled button in the current style (the Skins page's Button style setting). | `Widgets.lua:426` |
+| `ns.StyledFacade(S)` | The facade a skin receives, with S.Button drawing the chosen button style afterwards. | `Widgets.lua:419` |
+| `ns.RefreshButtonStyle()` | Re-draws every styled button in the current style (the Skins page's Button style setting). | `Widgets.lua:430` |
 
 ## Helpers.lua
 
