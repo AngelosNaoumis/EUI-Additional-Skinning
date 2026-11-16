@@ -24,7 +24,7 @@ Installed on Forever (1.60.005): check in game.
 
 ## Performance
 
-28 hook sites, all post-hooks on Altoholic's own methods. No timers or polling.
+28 hook sites, all post-hooks on Altoholic's own methods. No recurring timers or polling.
 
 ## Fixes
 

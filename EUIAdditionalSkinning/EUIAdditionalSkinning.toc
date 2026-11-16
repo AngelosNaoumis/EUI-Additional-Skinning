@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: EUI Additional Skinning
-## Notes: EllesmereUI skins for Altoholic, Attune, Auctionator, BugSack, Forever Dungeon Journal, Naowh Forever, OneForAll and What's Training?.
+## Notes: EllesmereUI skins for Altoholic, Attune, Auctionator, BugSack, Forever Dungeon Journal, GearQuest Forever, Hunter's Field Guide, Naowh Forever, OneForAll and What's Training?.
 ## Author: AngelosNaoumis
 ## X-License: MIT
 ## Version: 2.1.0

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Completed a repository-wide skin consistency and lifecycle audit: popup menus no longer allocate
+  the retired coloured top stripe, BugSack navigation refreshes no longer rewrite unchanged control
+  geometry, and readable-text conversion now rejects unsafe colour channels before arithmetic.
+- Added regressions for accent-free legacy and modern menus, one-time BugSack navigation layout and
+  secret-safe readable text; corrected integration lifecycle and supported-skin documentation.
 - Removed Additional Skinning's class/accent-coloured 2px top line from every managed window while
   retaining accent colours on text, selections and functional indicators.
 - Fixed Hunter's Field Guide and GearQuest Forever portraits so their original art and hit targets

@@ -6,7 +6,7 @@
 
 BugSack's window gets the shell (76px footer, no accent bar), square portrait, flat tabs along the bottom, and flat Previous/Next/Send/Wipe buttons with BugSack's own labels and click actions.
 
-Not installed on Forever: mock-tested only.
+Audited against the installed BugSack source; the final look still needs an in-game check.
 
 ## Frame map
 
@@ -23,11 +23,11 @@ Not installed on Forever: mock-tested only.
 
 ## Performance
 
-Six hook sites. The `PanelTemplates_*` hooks are global but return at once for tabs that are not BugSack's.
+Six hook sites. The `PanelTemplates_*` hooks are global but return at once for tabs that are not BugSack's. Tab and footer-button geometry is applied once per control; selection refreshes update state without reanchoring or resizing.
 
 ## Fixes
 
-None: verbatim.
+- **Refresh layout:** scoped refreshes used to repeat unchanged `ClearAllPoints`, `SetPoint` and `SetSize` calls. Per-control one-time guards retain late-created controls while keeping navigation geometry stable.
 
 ## Known limits
 

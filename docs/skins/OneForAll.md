@@ -29,7 +29,7 @@ Not installed on Forever: mock-tested only (source-shaped specs, Retail and Fore
 
 ## Known limits
 
-- Runs on `Scoped.lua`/`Menus.lua` and the shared helpers.
+- Registers directly through `ns.RegisterModule`; it owns constructor-based discovery and scheduling, and uses `Menus.lua` plus the shared helpers.
 - Mock specs check the behaviour listed in the spec header; the look itself needs an in-game check.
 
 ## History

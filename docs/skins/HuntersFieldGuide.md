@@ -44,7 +44,7 @@ Built from Hunter's Field Guide 0.8.7's source (installed copy). **Not yet check
 
 ## Performance
 
-Passes run only from the hooked methods and the scan's show/click hooks: no timers, no polling.
+Passes run only from hooked methods and the scan's event-driven show/click hooks: no recurring timers or polling.
 The portrait anchor is compared before writing. The text check also compares before writing;
 backdrops and the header are handled once (`H.Once`).
 

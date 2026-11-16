@@ -47,13 +47,13 @@ python -c "import lupa.lua51 as l; r = l.LuaRuntime(); r.execute(\"table.unpack 
 | `tests/widgets_spec.lua` | Scanner | `H.Scan` scroll scoping, discovery, exclusions, fades |
 | `tests/core_spec.lua` | Core | TOC order, lazy activation, EUI toggles for enabled targets, GUID enable state, no old-addon guard or import, combat-end pass only after a deferral, `/eas` and `/easnf` only (no legacy commands, one handler each), Debug Mode help |
 | `tests/loader_spec.lua` | Loader | Factories per enabled, loaded target; combat; EUI toggle; failure isolation |
-| `tests/menus_spec.lua` | Menus | Bound popup and dropdown menus, restoration, combat |
+| `tests/menus_spec.lua` | Menus | Bound popup and dropdown menus, no top accent allocation, restoration, combat |
 | `tests/naowh_spec.lua` | Naowh Forever | Load order, factory wrapping, saved settings honoured, guard, both options pages, copy/manual border, EllesmereUI borders, `/easnf` (status, `edge 2`), bulk actions scoped to Naowh, player-only GCD event |
 | `tests/options_spec.lua` | Options | The EUI plugin page: master, Debug Mode (off by default, no reload) and per-skin toggles, rows locked while their addon is off, reload prompt on every change, `/eas options` |
 | `tests/dev_spec.lua` | Dev tools | Debug Mode gate (off: no work), `/eas dump`, `probe` (secret-safe) and `perf` |
 | `tests/limits_spec.lua` | Headroom | Every skin handler at or under 50 upvalues |
 | `tests/auctionator_*_spec.lua` | Skin specs | Auctionator; they keep their own fakes |
-| `tests/<addon>_spec.lua` (Altoholic, Attune, BugSack, ForeverDungeonJournal, WhatsTraining, OneForAll x2) | Skin specs | One per skin; OneForAll has two (source-shaped and Forever API) |
+| `tests/<addon>_spec.lua` (Altoholic, Attune, BugSack, ForeverDungeonJournal, GearQuestForever, HuntersFieldGuide, WhatsTraining, OneForAll x2) | Skin specs | One per skin; OneForAll has two (source-shaped and Forever API) |
 | `tests/test_*.py` | Tool tests | `read_dump.py` round trip; the docs' Lua examples; scripts compile and `new_skin.py` output passes the suite |
 
 ## `tests/support.lua`

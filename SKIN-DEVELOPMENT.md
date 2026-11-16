@@ -123,7 +123,7 @@ A window inside another skinned window (a tab panel) is `"controls"`.
 | `H.Fade(texture)` | Alpha 0, kept at 0 if the target re-shows it. Never `Hide()` someone else's art. |
 | `H.Font(text [, r, g, b])` | EUI font (and colour); a no-op when already applied. |
 | `H.Texture(v)` / `H.Icon(f)` | A Texture region or nil; an item/spell button's icon texture. |
-| `H.Shell(f, refresh, options)` | Themed window shell plus accent bar (`options.noAccent`: none); root modes call this. |
+| `H.Shell(f, refresh, options)` | Themed window shell without a coloured top accent line; root modes call this. |
 | `H.Tab(tab, selected)` | House tab with an explicit selected state. |
 | `H.Regions(f)` / `H.Children(f)` | Region and child lists (cheap for frames with none). |
 | `H.Action(f, keepKeys)` / `H.LegacySlider(f)` | Backdrop-template buttons; classic `Slider` scroll bars. |
