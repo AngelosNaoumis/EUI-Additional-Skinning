@@ -1,5 +1,5 @@
 local ADDON, ns = ...
-ns.VERSION = "2.0.0"
+ns.VERSION = "2.1.0"
 ns.TITLE = "EUI Additional Skinning"
 ns.modules = {}
 
