@@ -8,7 +8,7 @@ How to use these in a skin: [SKIN-DEVELOPMENT.md](../SKIN-DEVELOPMENT.md).
 | Function | What it does | Where |
 | --- | --- | --- |
 | `ns.Print(message)` | - | `Core.lua:10` |
-| `ns.DB()` | The saved settings table: disabled (master switch), skins[id] = false (switched off here), euiWindows/euiBags (EllesmereUI borders), debug (Debug Mode), naowh (the Naowh Forever integration's settings), dumps (Dev.lua). | `Core.lua:18` |
+| `ns.DB()` | The saved settings table: disabled (master switch), skins[id] = false (switched off here), euiWindows/euiBags (EllesmereUI borders), debug (Debug Mode), buttonStyle ("window"; nil = Game Menu), naowh (the Naowh Forever integration's settings), dumps (Dev.lua). | `Core.lua:18` |
 | `ns.AddOnLoaded(name)` | An addon folder is loaded in this session. | `Core.lua:26` |
 | `ns.EllesmereOption(key)` | The EllesmereUI window and bag borders (Skins page): "euiWindows" or "euiBags", on unless switched off. | `Core.lua:31` |
 | `ns.DebugMode()` | Debug Mode (Skins page): the dev commands (/eas dump, probe, perf) work only while it is on. Off by default. | `Core.lua:37` |
@@ -18,9 +18,9 @@ How to use these in a skin: [SKIN-DEVELOPMENT.md](../SKIN-DEVELOPMENT.md).
 | `ns.TargetLoaded(entry)` | One of the entry's target addons is loaded in this session. | `Core.lua:89` |
 | `ns.LoadSkin(entry)` | Run the entry's skin factory once every condition holds; it then registers its module. | `Core.lua:101` |
 | `ns.RegisterSkinDefinition(id, factory)` | A skin file hands over its factory; it runs once its target is loaded (ns.LoadSkin). | `Core.lua:119` |
-| `ns.RegisterModule(id, label, available, install)` | A skin's factory calls this. available() says the target's frames exist; install runs once, with the S facade EUI handed over for its catalog entry. | `Core.lua:159` |
-| `ns.Apply()` | Install skins that can install now and refresh the active ones. Switching one on applies here; switching one off needs a reload, since a skin's hooks stay until then. | `Core.lua:171` |
-| `ns.Status(entry)` |  Status and commands  One phrase for a catalog entry's state, as /eas and the options page show it. | `Core.lua:205` |
+| `ns.RegisterModule(id, label, available, install)` | A skin's factory calls this. available() says the target's frames exist; install runs once, with the S facade EUI handed over for its catalog entry. | `Core.lua:161` |
+| `ns.Apply()` | Install skins that can install now and refresh the active ones. Switching one on applies here; switching one off needs a reload, since a skin's hooks stay until then. | `Core.lua:173` |
+| `ns.Status(entry)` |  Status and commands  One phrase for a catalog entry's state, as /eas and the options page show it. | `Core.lua:207` |
 
 ## Skin.lua
 
@@ -50,6 +50,9 @@ How to use these in a skin: [SKIN-DEVELOPMENT.md](../SKIN-DEVELOPMENT.md).
 | `H.Action(f, keep)` | Flat button for backdrop-template buttons, keeping the named regions. | `Widgets.lua:231` |
 | `H.LegacySlider(f, keep)` | Classic Slider scroll bar: thin track, accent thumb, page arrows. | `Widgets.lua:246` |
 | `ns.CreateSoftSkin(S, module, borderless)` | Opt-in treatment for owned addon controls. Keep EUI primitives and their fills/hover states; soften only their newly created pixel-border containers. borderless(f): true for controls whose soft edge (and square-icon edge) stays hidden. | `Widgets.lua:283` |
+| `ns.ButtonStyle()` | Button style (Skins page): "gamemenu" (the default) draws every button a skin styles through the facade like EllesmereUI's Game Menu buttons: an inset 2px inside the button, filled with the Popup Menu button colour and given its configured border (the calls the Game Menu uses); EllesmereUI's window-button fill and border are hidden, not removed. "window" keeps EllesmereUI's window button. Switching is live (ns.RefreshButtonStyle). Without those EllesmereUI calls every button keeps the window style. | `Widgets.lua:362` |
+| `ns.StyledFacade(S)` | The facade a skin receives, with S.Button drawing the chosen button style afterwards. | `Widgets.lua:415` |
+| `ns.RefreshButtonStyle()` | Re-draws every styled button in the current style (the Skins page's Button style setting). | `Widgets.lua:426` |
 
 ## Helpers.lua
 

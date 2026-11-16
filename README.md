@@ -53,7 +53,7 @@ default look, delete `Interface/Tooltips`.
 EUI's options panel has an **Additional Skinning** section (`/eas options`):
 
 - **Skins:** the master switch, **Enable Debug Mode** (off by default; turns on the developer
-  commands below, takes effect at once) and one toggle per addon. A row is locked while its addon isn't
+  commands below, takes effect at once), **Button style** (below) and one toggle per addon. A row is locked while its addon isn't
   enabled. Each skin also has its own toggle on EUI's Window Skins page (Third-Party Addons,
   "EUI Additional Skinning - ..."); a skin runs only when both are on. The **EllesmereUI** section
   holds **Border EllesmereUI windows** and **Border EllesmereUI bags**. Then the border settings:
@@ -68,6 +68,10 @@ EUI's options panel has an **Additional Skinning** section (`/eas options`):
   only: **Enable All** / **Disable All** switch every Naowh feature on or off (the manual border is
   kept); **Reset to Defaults** resets every Naowh setting, the border style and manual border
   included. None of them changes the EllesmereUI border toggles, Debug Mode or the skin switches.
+
+**Button style** (takes effect at once): **Game Menu** (default) draws the buttons in every skinned
+addon like EllesmereUI's Game Menu buttons, in your EllesmereUI **Popup Menu** button colour and
+border settings; **EllesmereUI windows** uses the window skins' dark grey button instead.
 
 Changes are saved at once; a reload is offered, and switching off needs it.
 

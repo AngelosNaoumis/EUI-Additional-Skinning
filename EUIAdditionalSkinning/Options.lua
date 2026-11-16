@@ -81,6 +81,16 @@ local function BuildSkins(_, parent, y)
             ns.DB().debug = on and true or nil
             if not on then ns.profiling = false end
         end}); y = y - h
+    -- Live, no reload: it repaints the buttons already styled (Widgets.lua).
+    _, h = W:DualRow(parent, y, {type = "dropdown", text = "Button style",
+        tooltip = "How buttons in the skinned addons look. Game Menu: your EllesmereUI Popup Menu button colour and border, like the Game Menu. EllesmereUI windows: the window skins' dark grey button.",
+        values = {gamemenu = "Game Menu", window = "EllesmereUI windows"}, order = {"gamemenu", "window"},
+        getValue = ns.ButtonStyle,
+        setValue = function(value)
+            ns.DB().buttonStyle = value == "window" and "window" or nil
+            ns.RefreshButtonStyle()
+        end},
+        {type = "label", text = ""}); y = y - h
     _, h = W:Spacer(parent, y, 10); y = y - h
     _, h = W:SectionHeader(parent, "SKINS", y); y = y - h
     local rows = {}

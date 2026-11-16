@@ -34,6 +34,8 @@ T.Fire('ADDON_LOADED', 'Other')
 assert(not T.registered['EUI Additional Skinning - Baz Addon'], 'disabled target registered')
 local register = assert(T.registered['EUI Additional Skinning - Foo Addon'], 'enabled target has no EUI toggle')
 register(T.S)
+assert(entry.skin ~= T.S and entry.skin.Button ~= T.S.Button and entry.skin.Shell == T.S.Shell,
+    'the facade a skin receives does not draw the chosen button style')
 assert(factoryRuns == 0 and #ns.modules == 0, 'factory ran before its target loaded')
 -- Loaded: the factory runs once, the module waits for available(), then installs once.
 T.loaded.Foo = true

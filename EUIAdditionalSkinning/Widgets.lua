@@ -352,3 +352,77 @@ function ns.CreateSoftSkin(S, module, borderless)
     -- ScrollBar/PageButton/SquareIcon and accent/status primitives pass through.
     return setmetatable(proxy, {__index = S})
 end
+
+-- Button style (Skins page): "gamemenu" (the default) draws every button a skin styles through
+-- the facade like EllesmereUI's Game Menu buttons: an inset 2px inside the button, filled with the
+-- Popup Menu button colour and given its configured border (the calls the Game Menu uses);
+-- EllesmereUI's window-button fill and border are hidden, not removed. "window" keeps EllesmereUI's
+-- window button. Switching is live (ns.RefreshButtonStyle). Without those EllesmereUI calls every
+-- button keeps the window style.
+function ns.ButtonStyle()
+    local db = EUIAdditionalSkinningDB
+    return db and db.buttonStyle == "window" and "window" or "gamemenu"
+end
+
+local buttonState = setmetatable({}, {__mode = "k"}) -- button -> applied style
+local buttonInsets = setmetatable({}, {__mode = "k"}) -- button -> its Game Menu inset
+
+local function ButtonParts(btn)
+    local E = _G.EllesmereUI
+    local bs = E and E._ModuleNS and E._ModuleNS.EllesmereUIBlizzardSkin
+    local ws = bs and bs.WSkin
+    local data = ws and ws.GetFFD and ws.GetFFD(btn)
+    return E, data and data.bg, E and (E.PanelPP or E.PP)
+end
+
+local function PaintButton(btn)
+    local E, fill, pp = ButtonParts(btn)
+    local menu = ns.ButtonStyle() == "gamemenu" and E and E._applyBlizzardConfiguredBorder ~= nil
+    local style = menu and "gamemenu" or "window"
+    if buttonState[btn] == style then return end
+    local inset = buttonInsets[btn]
+    if menu then
+        if not inset then
+            -- A new child of a protected button can't be made in combat; the next pass does it.
+            if InCombatLockdown and InCombatLockdown() and btn.IsProtected and btn:IsProtected() then return end
+            inset = CreateFrame("Frame", nil, btn)
+            inset:SetPoint("TOPLEFT", 2, -2)
+            inset:SetPoint("BOTTOMRIGHT", -2, 2)
+            inset:SetFrameLevel(btn:GetFrameLevel())
+            inset:EnableMouse(false)
+            inset.bg = inset:CreateTexture(nil, "BACKGROUND", nil, -6)
+            inset.bg:SetAllPoints()
+            buttonInsets[btn] = inset
+            ns.OwnFrames = ns.OwnFrames or setmetatable({}, {__mode = "k"})
+            ns.OwnFrames[inset] = true
+        end
+        local db = EllesmereUIDB
+        local c = db and db.popupMenuButtonBackgroundColor or {r = 0.1, g = 0.1, b = 0.1, a = 0.8}
+        inset.bg:SetColorTexture(c.r or 0.1, c.g or 0.1, c.b or 0.1, c.a == nil and 0.8 or c.a)
+        E._applyBlizzardConfiguredBorder(inset, "popupMenuButton", 1)
+        inset:Show()
+        if fill then fill:SetAlpha(0) end
+        if pp and pp.HideBorder then pp.HideBorder(btn) end
+    else
+        if inset then inset:Hide() end
+        if fill then fill:SetAlpha(1) end
+        if pp and pp.ShowBorder and buttonState[btn] then pp.ShowBorder(btn) end
+    end
+    buttonState[btn] = style
+end
+
+-- The facade a skin receives, with S.Button drawing the chosen button style afterwards.
+function ns.StyledFacade(S)
+    if type(S) ~= "table" or type(S.Button) ~= "function" then return S end
+    local button = S.Button
+    return setmetatable({Button = function(btn, ...)
+        local result = button(btn, ...)
+        if type(btn) == "table" and btn.GetObjectType then PaintButton(btn) end
+        return result
+    end}, {__index = S})
+end
+
+-- Re-draws every styled button in the current style (the Skins page's Button style setting).
+function ns.RefreshButtonStyle()
+    for btn in pairs(buttonState) do buttonState[btn] = buttonState[btn] and "stale" or nil; PaintButton(btn) end
+end

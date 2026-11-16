@@ -1,4 +1,4 @@
--- Options: EUI plugin section, Debug Mode toggle, one row per catalog entry (each TOC skin defines one), rows locked while their addon is not enabled, a debounced reload prompt on every change, switch-on applied at once, /eas options.
+-- Options: EUI plugin section, Debug Mode toggle, Button style (Game Menu or window, live), one row per catalog entry (each TOC skin defines one), rows locked while their addon is not enabled, a debounced reload prompt on every change, switch-on applied at once, /eas options.
 local T = dofile('tests/support.lua')
 local plugin, popups, opened, refreshes = nil, {}, nil, 0
 EllesmereUI.RegisterPlugin = function(id, spec) plugin = {id = id, spec = spec}; return true end
@@ -42,6 +42,42 @@ assert(EUIAdditionalSkinningDB.debug == true and debug.getValue() and #popups ==
 ns.profiling = true
 debug.setValue(false); T.Flush()
 assert(EUIAdditionalSkinningDB.debug == nil and not ns.profiling and #popups == before, 'Debug Mode off left perf timing on')
+
+-- Button style: Game Menu by default. A button the facade styles gets one inset 2px inside it
+-- with the Popup Menu button colour and EllesmereUI's configured border (the Game Menu's calls);
+-- the window fill and border are hidden. The dropdown switches live, both ways, without a reload.
+local styleRow = assert(byText['Button style'], 'no Button style setting on the Skins page')
+assert(styleRow.getValue() == 'gamemenu', 'Button style not Game Menu by default')
+local borders, ffd = {}, {}
+EllesmereUI._applyBlizzardConfiguredBorder = function(owner, prefix, legacy) borders[#borders + 1] = {owner, prefix, legacy} end
+EllesmereUI.PP = {HideBorder = function(f) f.ppHidden = true end, ShowBorder = function(f) f.ppHidden = false end}
+EllesmereUI._ModuleNS = {EllesmereUIBlizzardSkin = {WSkin = {GetFFD = function(f) ffd[f] = ffd[f] or {}; return ffd[f] end}}}
+EllesmereUIDB = {popupMenuButtonBackgroundColor = {r = 0.54, g = 0, b = 0, a = 0.4}}
+local facade = ns.StyledFacade(T.S)
+local btn = T.Frame('Button', T.Frame('Frame')); btn.label = T.FontString(btn, 'Search')
+ffd[btn] = {bg = T.Texture(btn, 'BACKGROUND')}
+facade.Button(btn)
+local inset = btn.children[1]
+assert(btn.skin.Button and inset and ns.OwnFrames[inset] and #btn.children == 1, 'no Game Menu inset (or not marked as our own frame)')
+assert(inset.points[1][2] == 2 and inset.points[1][3] == -2 and inset.points[2][2] == -2 and inset.points[2][3] == 2, 'inset not 2px inside the button')
+assert(inset.bg.color[1] == 0.54 and inset.bg.color[4] == 0.4, 'inset not in the Popup Menu button colour')
+assert(#borders == 1 and borders[1][1] == inset and borders[1][2] == 'popupMenuButton' and borders[1][3] == 1, 'Popup Menu border not applied')
+assert(ffd[btn].bg.alpha == 0 and btn.ppHidden == true and inset.shown, 'window fill or border still showing')
+facade.Button(btn)
+assert(#btn.children == 1 and #borders == 1, 'a second pass rebuilt the inset or the border')
+before = #popups
+styleRow.setValue('window'); T.Flush()
+assert(EUIAdditionalSkinningDB.buttonStyle == 'window' and not inset.shown and ffd[btn].bg.alpha == 1 and btn.ppHidden == false
+    and #popups == before, 'switching to the window style is not live')
+styleRow.setValue('gamemenu'); T.Flush()
+assert(EUIAdditionalSkinningDB.buttonStyle == nil and inset.shown and ffd[btn].bg.alpha == 0 and btn.ppHidden == true
+    and #btn.children == 1, 'switching back to the Game Menu style is not live')
+-- Without EllesmereUI's configured-border call, buttons keep the window style untouched.
+EllesmereUI._applyBlizzardConfiguredBorder = nil
+local plain = T.Frame('Button', T.Frame('Frame')); ffd[plain] = {bg = T.Texture(plain, 'BACKGROUND')}
+facade.Button(plain)
+assert(#plain.children == 0 and ffd[plain].bg.alpha == 1 and not plain.ppHidden, 'a button changed without the Game Menu style available')
+EllesmereUI.PP, EllesmereUI._ModuleNS, EllesmereUIDB = nil, nil, nil
 -- Rows come from the catalog, so a skin has its row before its code loads.
 for _, entry in ipairs(ns.skinCatalog) do assert(byText[entry.label], entry.id .. ' has no row on the options page') end
 -- Each TOC skin file defines a catalog entry (ns.RegisterSkinDefinition), and each skin entry has a file.

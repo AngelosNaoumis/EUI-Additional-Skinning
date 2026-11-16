@@ -99,6 +99,8 @@ local t = C_Timer.NewTicker(1, Poll) -- lint-allow: polling until 2026-12-31 by 
 - EllesmereUI internals: `_ModuleNS` and the action-bar profile (copied border), `PP.GetBorders`
   and `_bdBorderData` (border frames), the window engine's `WSkin.Shell` and frame data (window
   borders), `BorderPxSliderCfg`/`BorderOffsetRowCfgs` (manual border controls, options addon).
+- The Game Menu button style: `EllesmereUI._applyBlizzardConfiguredBorder`, the `popupMenuButton*`
+  settings, the window engine's `GetFFD(button).bg` and `PP.HideBorder`/`ShowBorder` (`Widgets.lua`).
 - Naowh Forever internals: the factories `Runtime.lua` wraps (ARCHITECTURE.md "Naowh Forever").
 - Attune's bronze chrome (`AttuneBronzeChrome`, `widget.attuneViewToggle`) and Altoholic's
   AddonFactory templates are matched by key; a target update that renames them falls back to the

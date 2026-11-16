@@ -13,7 +13,7 @@ end
 local Print = ns.Print
 
 -- The saved settings table: disabled (master switch), skins[id] = false (switched off here),
--- euiWindows/euiBags (EllesmereUI borders), debug (Debug Mode), naowh (the Naowh Forever
+-- euiWindows/euiBags (EllesmereUI borders), debug (Debug Mode), buttonStyle ("window"; nil = Game Menu), naowh (the Naowh Forever
 -- integration's settings), dumps (Dev.lua).
 function ns.DB()
     local db = EUIAdditionalSkinningDB
@@ -142,6 +142,8 @@ local function Register()
         if not entry.registered and ns.TargetEnabled(entry) then
             entry.registered = true
             EUI.RegisterSkin(SKIN_PREFIX .. entry.label, function(S)
+                -- Every skin's buttons draw the chosen button style (Widgets.lua).
+                if ns.StyledFacade then S = ns.StyledFacade(S) end
                 entry.skin = S
                 for _, module in ipairs(ns.modules) do
                     if module.id == entry.id then module.skin = S end
