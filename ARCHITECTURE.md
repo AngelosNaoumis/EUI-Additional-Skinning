@@ -124,6 +124,12 @@ them again. The style is the skin's own (`buttonStyles[id]`, the facade knows it
 default (`buttonStyle`). Per button the applied style is remembered, so passes repeat nothing; the Skins page
 setting repaints every styled button at once. The inset is in `ns.OwnFrames`.
 
+The same facade fits only labels of buttons a supported skin actually sends through `S.Button`.
+It preserves the intended font properties and button geometry, shrinks oversized single-line text
+to a 9px floor, and records an overflow exception rather than shrinking below it. Weak per-object
+state and targeted method hooks handle genuine text, size and font changes; cached measurements
+make unchanged calls a no-op. There is no global Blizzard-button hook, scan, timer or `OnUpdate`.
+
 ## Menus
 
 `Menus.lua` styles a dropdown only while its owner was bound by an enabled skin

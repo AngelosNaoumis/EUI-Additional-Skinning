@@ -42,18 +42,20 @@ How to use these in a skin: [SKIN-DEVELOPMENT.md](../SKIN-DEVELOPMENT.md).
 | `H.Queue(key, callback)` | Run callback once on the next frame, coalescing repeats under key (C.refresh uses this). | `Widgets.lua:65` |
 | `H.Fade(texture)` | Alpha 0, kept at 0 if the target re-shows it. Never Hide another addon's art. | `Widgets.lua:81` |
 | `H.Font(text, r, g, b)` | Fonts are re-checked on every pass; re-apply only when the EUI font, its flags or the requested colour are not already in place. | `Widgets.lua:95` |
-| `H.Texture(value)` | value when it is a Texture region, else nil. | `Widgets.lua:109` |
-| `H.Icon(f)` | A button's icon Texture (.icon or .Icon), else nil. | `Widgets.lua:115` |
-| `H.Shell(f, refresh, options)` | Themed window shell, once; refresh queued on show. AttachAccent is a compatibility no-op: Additional Skinning windows deliberately have no top-edge accent line. | `Widgets.lua:121` |
-| `H.Tab(f, selected)` | House tab with an explicit selected state (true, false, or nil for native). | `Widgets.lua:144` |
-| `H.Scan(root, refresh, visit, exclude)` | Walk root's tree: auto-style controls by kind, call visit(f, kind), hook refreshes. | `Widgets.lua:151` |
-| `H.Action(f, keep)` | Flat button for backdrop-template buttons, keeping the named regions. | `Widgets.lua:232` |
-| `H.LegacySlider(f, keep)` | Classic Slider scroll bar: thin track, accent thumb, page arrows. | `Widgets.lua:247` |
-| `ns.CreateSoftSkin(S, module, borderless)` | Opt-in treatment for owned addon controls. Keep EUI primitives and their fills/hover states; soften only their newly created pixel-border containers. borderless(f): true for controls whose soft edge (and square-icon edge) stays hidden. | `Widgets.lua:284` |
-| `ns.ButtonStyle(id)` | The style for a skin's buttons (id), or the default (no id). | `Widgets.lua:365` |
-| `ns.SkinButtonSetting(id)` | A skin's own setting: "gamemenu", "window", or "default" (follows the default style). | `Widgets.lua:372` |
-| `ns.StyledFacade(S, id)` | The facade skin id receives, with S.Button drawing that skin's button style afterwards. | `Widgets.lua:431` |
-| `ns.RefreshButtonStyle()` | Re-draws every styled button in the current style (the Skins page's Button style setting). | `Widgets.lua:445` |
+| `H.FitButtonText(button, options)` | Fit the label of a styled text button without changing its geometry. | `Widgets.lua:109` |
+| `H.Texture(value)` | value when it is a Texture region, else nil. | `Widgets.lua:113` |
+| `H.Icon(f)` | A button's icon Texture (.icon or .Icon), else nil. | `Widgets.lua:119` |
+| `H.Shell(f, refresh, options)` | Themed window shell, once; refresh queued on show. AttachAccent is a compatibility no-op: Additional Skinning windows deliberately have no top-edge accent line. | `Widgets.lua:125` |
+| `H.Tab(f, selected)` | House tab with an explicit selected state (true, false, or nil for native). | `Widgets.lua:148` |
+| `H.Scan(root, refresh, visit, exclude)` | Walk root's tree: auto-style controls by kind, call visit(f, kind), hook refreshes. | `Widgets.lua:155` |
+| `H.Action(f, keep)` | Flat button for backdrop-template buttons, keeping the named regions. | `Widgets.lua:236` |
+| `H.LegacySlider(f, keep)` | Classic Slider scroll bar: thin track, accent thumb, page arrows. | `Widgets.lua:251` |
+| `ns.CreateSoftSkin(S, module, borderless)` | Opt-in treatment for owned addon controls. Keep EUI primitives and their fills/hover states; soften only their newly created pixel-border containers. borderless(f): true for controls whose soft edge (and square-icon edge) stays hidden. | `Widgets.lua:288` |
+| `ns.FitButtonText(button, options)` | Shrink an oversized styled button label to fit its current width and height. Options: padding (horizontal, default 8), verticalPadding (default 2), minSize (default 9), icon and iconGap. | `Widgets.lua:492` |
+| `ns.ButtonStyle(id)` | The style for a skin's buttons (id), or the default (no id). | `Widgets.lua:546` |
+| `ns.SkinButtonSetting(id)` | A skin's own setting: "gamemenu", "window", or "default" (follows the default style). | `Widgets.lua:553` |
+| `ns.StyledFacade(S, id)` | The facade skin id receives, with S.Button drawing that skin's button style afterwards. | `Widgets.lua:612` |
+| `ns.RefreshButtonStyle()` | Re-draws every styled button in the current style (the Skins page's Button style setting). | `Widgets.lua:632` |
 
 ## Helpers.lua
 

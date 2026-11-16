@@ -16,9 +16,9 @@ Built from GearQuest Forever 1.2.0's source (installed copy). **Not yet checked 
 | `GearQuestLogFrame` (log, settings, simulator, lookup pages) | EUI shell; portrait kept inside the top-left corner; panels a 1px grey edge; text readable |
 | `GearQuestSimulateDialog` | EUI shell (its own backdrop removed each time it opens) |
 | `GearQuestLanguageMenu` and the menus inside the window | Fill kept, 1px flat edge |
-| Buttons, edit boxes, checkboxes, scroll bars, horizontal sliders | EUI controls |
+| Buttons, edit boxes, checkboxes, scroll bars, horizontal sliders | EUI controls; oversized text-button labels shrink conservatively without changing the control |
 | Hunt rows (`GearQuestLogRow<n>`), list tabs (`gqFill`) | Unchanged |
-| External page tabs (`frame.sideTabRail`) | Original icon/chrome/state art and native GearQuest layout |
+| External page tabs (`frame.sideTabRail`) | Original icon/chrome/state art and native GearQuest layout; overlapping eight pixels render behind the main window |
 | Tracker, toasts, portrait guide, minimap button, slot popup on the character sheet, gamepad UI | Unchanged (HUD and overlays) |
 
 ## Frame map
@@ -56,14 +56,23 @@ Built from GearQuest Forever 1.2.0's source (installed copy). **Not yet checked 
 - **Right-side buttons:** reusing Character Pane internals would couple this skin to protected
   Blizzard/EUI implementation details. Following the safe fallback, GearQuest's original buttons,
   icons, selected/hover art, tooltips, click scripts and layout stay unskinned. GearQuest reapplies
-  their anchors and selected-state chrome together on every page change, so it remains the sole
-  geometry owner; the skin neither post-hooks `SetPageTab` nor moves the rail during later passes.
+  their anchors, sizes, frame levels and selected-state chrome together on every page change. Its
+  `DIALOG` rail and button levels originally put the overlap above the `DIALOG` level-100 window.
+  The skin sets each actual tab to the lower `HIGH` strata once when it is discovered. GearQuest
+  remains the sole geometry and state owner, while the window covers only the overlapping eight
+  pixels and the exposed `UIParent`-parented portion remains clickable. The skin does not hook
+  `SetPageTab`; if GearQuest genuinely replaces a tab, the next normal refresh treats that new
+  object once.
+- **Button labels:** the shared styled-button policy keeps the intended size when it fits and
+  progressively shrinks oversized labels, including Play style, to a 9px minimum. It changes no
+  button geometry, alignment, colour, outline, click script or intro animation.
 
 ## Performance
 
 Passes are one-shot and coalesced from the hooked methods and the scan's show/click hooks: no
 polling or recurring timer. Portrait and bubble anchors are compared before writing; each intro
-wash is anchored once. The side-tab rail is outside the scanned window and receives no skin work.
+wash is anchored once. The side-tab rail is outside the scanned window; only each tab object's
+strata is written once, while GearQuest's repeated native layout passes remain untouched.
 Per frame, the text check compares before writing; panels and menus are handled once
 (`H.Once`).
 
@@ -73,6 +82,8 @@ Per frame, the text check compares before writing; panels and menus are handled 
 - The tracker, toasts, portrait guide and character-sheet popup are HUD or overlay pieces and keep
   GearQuest's look.
 - Dropdowns built from `UIDropDownMenuTemplate` in the simulate dialog keep Blizzard's art.
+- A label that still cannot fit at the readable 9px minimum is left at 9px and marked
+  `euiasTextFitOverflow` for in-game diagnosis; it is not made smaller or given a wider button.
 
 ## History
 

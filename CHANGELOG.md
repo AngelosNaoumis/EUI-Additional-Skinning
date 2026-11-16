@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Fixed GearQuest Forever's right-side page tabs so their eight-pixel overlap renders behind the
+  main window while the exposed original buttons, states, tooltips and click handlers remain intact;
+  navigation no longer causes any skin-owned positioning or repeated layering writes.
+- Added scoped automatic label fitting for buttons styled by supported integrations: labels keep
+  their intended font size when possible, shrink only as needed to a readable 9px minimum, and
+  respond to real text, size and font changes without polling or changing button geometry.
 - Completed a repository-wide skin consistency and lifecycle audit: popup menus no longer allocate
   the retired coloured top stripe, BugSack navigation refreshes no longer rewrite unchanged control
   geometry, and readable-text conversion now rejects unsafe colour channels before arithmetic.

@@ -95,6 +95,13 @@ function Texture:SetText(text) self.text = text end
 function Texture:GetFont() return self.font, self.size or 12, self.flags end
 function Texture:SetFont(font, size, flags) self.font, self.size, self.flags = font, size, flags; self.fontWrites = (self.fontWrites or 0) + 1 end
 function Texture:SetFontObject(font) self.font = font end
+function Texture:GetStringWidth() return #(tostring(self.text or "")) * (self.size or 12) * 0.6 end
+function Texture:GetUnboundedStringWidth() return self:GetStringWidth() end
+function Texture:GetStringHeight() return self.size or 12 end
+function Texture:SetWordWrap(value) self.wordWrap = value end
+function Texture:GetWordWrap() if self.wordWrap == nil then return true end; return self.wordWrap end
+function Texture:SetMaxLines(value) self.maxLines = value end
+function Texture:GetMaxLines() return self.maxLines or 0 end
 function Texture:GetTextColor() return table.unpack(self.textColor or {1, 1, 1, 1}) end
 function Texture:SetTextColor(...) self.textColor = {...} end
 

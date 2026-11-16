@@ -105,6 +105,10 @@ function ns.CreateSkinHelper(S, module)
         end
         S.Font(text, r, g, b)
     end
+    -- Fit the label of a styled text button without changing its geometry.
+    function H.FitButtonText(button, options)
+        if ns.FitButtonText then return ns.FitButtonText(button, options) end
+    end
     -- value when it is a Texture region, else nil.
     function H.Texture(value)
         local kind = type(value)
@@ -354,6 +358,183 @@ function ns.CreateSoftSkin(S, module, borderless)
     return setmetatable(proxy, {__index = S})
 end
 
+-- Button labels are fitted only for controls a skin passes through S.Button. Each label keeps its
+-- font path/flags and intended size; only an oversized label is reduced, never below nine pixels by
+-- default. Per-button hooks recalculate after real text/width/font changes, with no global hook or
+-- polling. Set button.euiasAllowMultiline (or the label field) for an intentional multiline control.
+local fittedButtons = setmetatable({}, {__mode = "k"})
+local fittedLabels = setmetatable({}, {__mode = "k"})
+local DEFAULT_TEXT_PADDING, DEFAULT_MIN_TEXT_SIZE, DEFAULT_ICON_GAP = 8, 9, 4
+
+local function PlainNumber(value)
+    return type(value) == "number" and not (issecretvalue and issecretvalue(value))
+end
+
+local function ButtonLabel(button)
+    if type(button) ~= "table" and type(button) ~= "userdata" then return end
+    local label = button.GetFontString and button:GetFontString() or button.Text or button.text
+    if label and label.GetObjectType and label:GetObjectType() == "FontString" then return label end
+end
+
+local function SetLabelFont(state, path, size, flags)
+    if not state.label.SetFont then return end
+    state.settingFont = true
+    state.label:SetFont(path, size, flags or "")
+    state.settingFont = false
+    state.appliedPath, state.appliedSize, state.appliedFlags = path, size, flags or ""
+end
+
+local function RestoreLabelFont(state)
+    if not (state.basePath and state.baseSize) then return end
+    local path, size, flags = state.label:GetFont()
+    if path ~= state.basePath or size ~= state.baseSize or (flags or "") ~= state.baseFlags then
+        SetLabelFont(state, state.basePath, state.baseSize, state.baseFlags)
+    end
+end
+
+local function RestoreLabelLayout(state)
+    local label = state.label
+    if state.baseWordWrap ~= nil and label.GetWordWrap and label.SetWordWrap
+        and label:GetWordWrap() ~= state.baseWordWrap then label:SetWordWrap(state.baseWordWrap) end
+    if state.baseMaxLines ~= nil and label.GetMaxLines and label.SetMaxLines
+        and label:GetMaxLines() ~= state.baseMaxLines then label:SetMaxLines(state.baseMaxLines) end
+end
+
+local function VisibleIconWidth(state)
+    local button = state.button
+    local icon = state.icon or button.icon or button.Icon
+    if not icon or icon == state.label or not icon.GetWidth then return 0 end
+    if icon.IsShown and not icon:IsShown() then return 0 end
+    local width = icon:GetWidth()
+    if not PlainNumber(width) or width <= 0 then return 0 end
+    return width + state.iconGap
+end
+
+local function MeasureLabel(label)
+    local width
+    if label.GetUnboundedStringWidth then width = label:GetUnboundedStringWidth()
+    elseif label.GetStringWidth then width = label:GetStringWidth() end
+    local height = label.GetStringHeight and label:GetStringHeight()
+    return width, height
+end
+
+local function FitLabel(state)
+    if not state.active or state.settingFont then return end
+    local button, label = state.button, state.label
+    if InCombatLockdown and InCombatLockdown() and button.IsProtected and button:IsProtected() then return end
+    local width, height = button.GetWidth and button:GetWidth(), button.GetHeight and button:GetHeight()
+    if not PlainNumber(width) or not PlainNumber(height) or width <= 0 or height <= 0 then return end
+    local text = label.GetText and label:GetText()
+    if text == nil or issecretvalue and issecretvalue(text) then return end
+    text = tostring(text)
+    local iconWidth = VisibleIconWidth(state)
+    local availableWidth = width - state.padding * 2 - iconWidth
+    local availableHeight = height - state.verticalPadding * 2
+    if availableWidth <= 0 or availableHeight <= 0 then return end
+
+    local maxLines = label.GetMaxLines and label:GetMaxLines()
+    if button.euiasAllowMultiline or label.euiasAllowMultiline
+        or PlainNumber(maxLines) and maxLines > 1 then
+        RestoreLabelFont(state); RestoreLabelLayout(state)
+        button.euiasTextFitSize, button.euiasTextFitOverflow = nil, nil
+        state.lastText = nil
+        return
+    end
+    if state.lastText == text and state.lastWidth == availableWidth and state.lastHeight == availableHeight
+        and state.lastPath == state.basePath and state.lastSize == state.baseSize
+        and state.lastFlags == state.baseFlags and state.lastMin == state.minSize then return end
+    local currentHeight = label.GetStringHeight and label:GetStringHeight()
+    if height >= 36 and PlainNumber(currentHeight) and currentHeight > state.baseSize * 1.5 then return end
+
+    RestoreLabelFont(state)
+    local size = state.baseSize
+    local minSize = math.min(size, state.minSize)
+    local measuredWidth, measuredHeight = MeasureLabel(label)
+    local needsFit = not PlainNumber(measuredWidth) or measuredWidth > availableWidth
+        or PlainNumber(measuredHeight) and measuredHeight > availableHeight
+    if not needsFit then
+        RestoreLabelLayout(state)
+        button.euiasTextFitSize, button.euiasTextFitOverflow = size, nil
+        state.lastText, state.lastWidth, state.lastHeight = text, availableWidth, availableHeight
+        state.lastPath, state.lastSize, state.lastFlags = state.basePath, state.baseSize, state.baseFlags
+        state.lastMin = state.minSize
+        return
+    end
+    if label.SetWordWrap then label:SetWordWrap(false) end
+    if label.SetMaxLines then label:SetMaxLines(1) end
+    measuredWidth, measuredHeight = MeasureLabel(label)
+    while size > minSize and (not PlainNumber(measuredWidth) or measuredWidth > availableWidth
+        or PlainNumber(measuredHeight) and measuredHeight > availableHeight) do
+        size = math.max(minSize, size - 1)
+        SetLabelFont(state, state.basePath, size, state.baseFlags)
+        measuredWidth, measuredHeight = MeasureLabel(label)
+    end
+    local overflow = not PlainNumber(measuredWidth) or measuredWidth > availableWidth
+        or PlainNumber(measuredHeight) and measuredHeight > availableHeight
+    button.euiasTextFitSize = size
+    button.euiasTextFitOverflow = overflow or nil
+    state.lastText, state.lastWidth, state.lastHeight = text, availableWidth, availableHeight
+    state.lastPath, state.lastSize, state.lastFlags = state.basePath, state.baseSize, state.baseFlags
+    state.lastMin = state.minSize
+end
+
+local function InvalidateFit(state)
+    state.lastText = nil
+    FitLabel(state)
+end
+
+local function HookFit(object, method, callback)
+    if object and type(object[method]) == "function" then hooksecurefunc(object, method, callback) end
+end
+
+-- Shrink an oversized styled button label to fit its current width and height. Options: padding
+-- (horizontal, default 8), verticalPadding (default 2), minSize (default 9), icon and iconGap.
+function ns.FitButtonText(button, options)
+    local label = ButtonLabel(button)
+    if not label or not label.GetFont or not label.SetFont or not label.GetText then return end
+    local state = fittedButtons[button]
+    if state and state.label ~= label then
+        RestoreLabelFont(state); state.active = false; fittedLabels[state.label] = nil; state = nil
+    end
+    if not state then
+        local path, size, flags = label:GetFont()
+        if not path or not PlainNumber(size) then return end
+        state = {button = button, label = label, active = true, basePath = path, baseSize = size,
+            baseFlags = flags or "", baseWordWrap = label.GetWordWrap and label:GetWordWrap(),
+            baseMaxLines = label.GetMaxLines and label:GetMaxLines()}
+        fittedButtons[button], fittedLabels[label] = state, state
+        local changed = function() InvalidateFit(state) end
+        HookFit(button, "SetText", changed)
+        HookFit(button, "SetWidth", changed)
+        HookFit(button, "SetHeight", changed)
+        HookFit(button, "SetSize", changed)
+        HookFit(label, "SetText", changed)
+        local fontChanged = function()
+            if state.settingFont or not state.active then return end
+            local fontPath, fontSize, fontFlags = label:GetFont()
+            if fontPath and PlainNumber(fontSize) then
+                state.basePath, state.baseSize, state.baseFlags = fontPath, fontSize, fontFlags or ""
+                InvalidateFit(state)
+            end
+        end
+        HookFit(label, "SetFont", fontChanged)
+        HookFit(label, "SetFontObject", fontChanged)
+    end
+    options = options or {}
+    state.padding = PlainNumber(options.padding) and math.max(0, options.padding) or DEFAULT_TEXT_PADDING
+    state.verticalPadding = PlainNumber(options.verticalPadding) and math.max(0, options.verticalPadding) or 2
+    state.minSize = PlainNumber(options.minSize) and math.max(1, options.minSize) or DEFAULT_MIN_TEXT_SIZE
+    state.icon, state.iconGap = options.icon, PlainNumber(options.iconGap) and options.iconGap or DEFAULT_ICON_GAP
+    FitLabel(state)
+    return state
+end
+
+local function RestoreFittedLabel(text)
+    local state = fittedLabels[text]
+    if state and state.active then RestoreLabelFont(state); state.lastText = nil end
+    return state
+end
+
 -- Button style (Skins page): "window" (the default) keeps EllesmereUI's window button; "gamemenu"
 -- draws every button a skin styles through
 -- the facade like EllesmereUI's Game Menu buttons: an inset 2px inside the button, filled with the
@@ -430,15 +611,21 @@ end
 -- The facade skin id receives, with S.Button drawing that skin's button style afterwards.
 function ns.StyledFacade(S, id)
     if type(S) ~= "table" or type(S.Button) ~= "function" then return S end
-    local button = S.Button
+    local button, font = S.Button, S.Font
     return setmetatable({Button = function(btn, ...)
         local result = button(btn, ...)
         if type(btn) == "table" and btn.GetObjectType then
             buttonOwners[btn] = id
             PaintButton(btn)
+            ns.FitButtonText(btn)
         end
         return result
-    end}, {__index = S})
+    end, Font = font and function(text, ...)
+        local state = RestoreFittedLabel(text)
+        local result = font(text, ...)
+        if state then FitLabel(state) end
+        return result
+    end or nil}, {__index = S})
 end
 
 -- Re-draws every styled button in the current style (the Skins page's Button style setting).

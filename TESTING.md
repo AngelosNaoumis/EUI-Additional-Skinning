@@ -45,6 +45,7 @@ python -c "import lupa.lua51 as l; r = l.LuaRuntime(); r.execute(\"table.unpack 
 | `tests/skin_spec.lua` | Framework | `ns.Skin`: roots and modes, passes, combat, visibility, events, gates, `ace` |
 | `tests/helpers_spec.lua` | Helpers | Every `Helpers.lua` building block |
 | `tests/widgets_spec.lua` | Scanner | `H.Scan` scroll scoping, discovery, exclusions, fades |
+| `tests/button_text_spec.lua` | Shared buttons | Single-line fitting, readable minimum, icons, dynamic labels and dimensions, intentional multiline labels and idempotence |
 | `tests/core_spec.lua` | Core | TOC order, lazy activation, EUI toggles for enabled targets, GUID enable state, no old-addon guard or import, combat-end pass only after a deferral, `/eas` and `/easnf` only (no legacy commands, one handler each), Debug Mode help |
 | `tests/loader_spec.lua` | Loader | Factories per enabled, loaded target; combat; EUI toggle; failure isolation |
 | `tests/menus_spec.lua` | Menus | Bound popup and dropdown menus, no top accent allocation, restoration, combat |
