@@ -12,6 +12,8 @@ ns.skinCatalog = {
     {id = "NaowhForever", label = "Naowh Forever", targets = {"NaowhForever"}, integration = true},
     {id = "OneForAll", label = "OneForAll", targets = {"OneForAll"}},
     {id = "WhatsTraining", label = "What's Training?", targets = {"WhatsTraining"}},
+    {id = "GearQuestForever", label = "GearQuest Forever", targets = {"GearQuestForever"}},
+    {id = "HuntersFieldGuide", label = "Hunter's Field Guide", targets = {"HuntersFieldGuide"}},
 }
 ns.skinCatalogByID = {}
 for _, entry in ipairs(ns.skinCatalog) do ns.skinCatalogByID[entry.id] = entry end

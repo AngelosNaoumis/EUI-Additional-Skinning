@@ -29,3 +29,5 @@ Skins\BugSack.lua
 Skins\ForeverDungeonJournal.lua
 Skins\OneForAll.lua
 Skins\WhatsTraining.lua
+Skins\GearQuestForever.lua
+Skins\HuntersFieldGuide.lua
