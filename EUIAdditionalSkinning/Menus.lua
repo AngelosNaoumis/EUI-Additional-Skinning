@@ -510,7 +510,13 @@ end
 -- and UIDropDownMenu_AddButton once per row. Apply is a no-op unless a bound menu is shown or one
 -- of ours still needs restoring, so the hooks return at once otherwise.
 local function Needed()
-    if next(extraLists) then return true end
+    for list, expected in pairs(extraLists) do
+        local binding = owners[expected]
+        if Enabled(binding) and list.IsShown and list:IsShown() then
+            local owner = list.GetOwnerRegion and list:GetOwnerRegion() or list.dropdown
+            if owner == expected then return true end
+        end
+    end
     for _, prefix in ipairs(MENU_PREFIXES) do
         local root = _G[prefix .. "1"]
         if root and root.dropdown and owners[root.dropdown] and root.IsShown and root:IsShown() then return true end
@@ -543,6 +549,9 @@ EnsureHooks = function()
     events = CreateFrame("Frame")
     events:RegisterEvent("ADDON_LOADED")
     events:RegisterEvent("PLAYER_REGEN_ENABLED")
-    events:SetScript("OnEvent", function() InstallHooks(); ns.RefreshPopupMenus() end)
+    events:SetScript("OnEvent", function()
+        InstallHooks()
+        if Needed() then ns.RefreshPopupMenus() end
+    end)
     InstallHooks()
 end

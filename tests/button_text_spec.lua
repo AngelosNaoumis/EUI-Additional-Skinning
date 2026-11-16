@@ -3,6 +3,21 @@ local T = dofile('tests/support.lua')
 local ns = T.Load()
 local S = ns.StyledFacade(T.S, 'ButtonTextTest')
 
+local function Upvalue(fn, wanted)
+    local index = 1
+    while true do
+        local name, value = debug.getupvalue(fn, index)
+        if not name then return end
+        if name == wanted then return value end
+        index = index + 1
+    end
+end
+
+local fittedButtons = assert(Upvalue(ns.FitButtonText, 'fittedButtons'), 'button fit cache not found')
+local fittedLabels = assert(Upvalue(ns.FitButtonText, 'fittedLabels'), 'label fit cache not found')
+assert(getmetatable(fittedButtons).__mode == 'kv' and getmetatable(fittedLabels).__mode == 'kv',
+    'button fit caches can retain key/value cycles on Lua 5.1')
+
 local function Button(text, width, height)
     local button = T.Frame('Button')
     button:SetSize(width or 100, height or 24)
@@ -11,6 +26,24 @@ local function Button(text, width, height)
     button.label:SetTextColor(0.2, 0.7, 0.9, 0.8)
     return button, button.label
 end
+
+local function Count(t)
+    local count = 0
+    for _ in pairs(t) do count = count + 1 end
+    return count
+end
+
+local buttonsBefore, labelsBefore = Count(fittedButtons), Count(fittedLabels)
+local function FitTemporaryButton()
+    local button = Button('Temporary long localized label', 100)
+    S.Button(button)
+end
+FitTemporaryButton()
+assert(Count(fittedButtons) == buttonsBefore + 1 and Count(fittedLabels) == labelsBefore + 1,
+    'temporary fitted control was not tracked')
+collectgarbage('collect'); collectgarbage('collect')
+assert(Count(fittedButtons) == buttonsBefore and Count(fittedLabels) == labelsBefore,
+    'dead fitted control state was retained')
 
 local short, shortLabel = Button('OK', 100)
 local shortWidth, shortHeight = short:GetSize()

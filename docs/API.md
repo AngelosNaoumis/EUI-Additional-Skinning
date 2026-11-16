@@ -51,11 +51,11 @@ How to use these in a skin: [SKIN-DEVELOPMENT.md](../SKIN-DEVELOPMENT.md).
 | `H.Action(f, keep)` | Flat button for backdrop-template buttons, keeping the named regions. | `Widgets.lua:236` |
 | `H.LegacySlider(f, keep)` | Classic Slider scroll bar: thin track, accent thumb, page arrows. | `Widgets.lua:251` |
 | `ns.CreateSoftSkin(S, module, borderless)` | Opt-in treatment for owned addon controls. Keep EUI primitives and their fills/hover states; soften only their newly created pixel-border containers. borderless(f): true for controls whose soft edge (and square-icon edge) stays hidden. | `Widgets.lua:288` |
-| `ns.FitButtonText(button, options)` | Shrink an oversized styled button label to fit its current width and height. Options: padding (horizontal, default 8), verticalPadding (default 2), minSize (default 9), icon and iconGap. | `Widgets.lua:492` |
-| `ns.ButtonStyle(id)` | The style for a skin's buttons (id), or the default (no id). | `Widgets.lua:546` |
-| `ns.SkinButtonSetting(id)` | A skin's own setting: "gamemenu", "window", or "default" (follows the default style). | `Widgets.lua:553` |
-| `ns.StyledFacade(S, id)` | The facade skin id receives, with S.Button drawing that skin's button style afterwards. | `Widgets.lua:612` |
-| `ns.RefreshButtonStyle()` | Re-draws every styled button in the current style (the Skins page's Button style setting). | `Widgets.lua:632` |
+| `ns.FitButtonText(button, options)` | Shrink an oversized styled button label to fit its current width and height. Options: padding (horizontal, default 8), verticalPadding (default 2), minSize (default 9), icon and iconGap. | `Widgets.lua:494` |
+| `ns.ButtonStyle(id)` | The style for a skin's buttons (id), or the default (no id). | `Widgets.lua:548` |
+| `ns.SkinButtonSetting(id)` | A skin's own setting: "gamemenu", "window", or "default" (follows the default style). | `Widgets.lua:555` |
+| `ns.StyledFacade(S, id)` | The facade skin id receives, with S.Button drawing that skin's button style afterwards. | `Widgets.lua:614` |
+| `ns.RefreshButtonStyle()` | Re-draws every styled button in the current style (the Skins page's Button style setting). | `Widgets.lua:634` |
 
 ## Helpers.lua
 

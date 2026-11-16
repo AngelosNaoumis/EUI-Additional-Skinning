@@ -178,6 +178,8 @@ print('PASS: Foo window, buttons, pooled rows, warm passes')
 - **Benchmarks:**
   - `benchmarks/<name>.lua` builds a synthetic workload and prints one `MEASURE` line.
   - `python scripts/benchmark.py <name> --before <older copy>` compares medians.
+  - `button_text` covers warm label fitting and dynamic labels; `menus` covers closed bound menus
+    and custom pools; `scan` and `auctionator` cover the shared walker and largest integration.
   - Use it for any change to per-pass code.
   - In game: Debug Mode on, then `/eas perf`.
 - **CI:** `.github/workflows/checks.yml` runs the same `tests/run.py` on Lua 5.1 and 5.4, then

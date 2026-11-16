@@ -182,6 +182,10 @@ assert(customRow.regions[2].alpha == 0 and customRow.regions[3].alpha == 1, 'liv
 local customLayer = custom.children[#custom.children]
 custom:Hide(); assert(custom.Backdrop.alpha == 1 and customLayer.alpha == 0)
 assert(customRow.Check.alpha == 0.8 and customRow.regions[2].alpha == 0 and customRow.regions[3].alpha == 0, 'native marker restoration lost')
+local unrelatedReads, originalIsShown = 0, DropDownList1.IsShown
+DropDownList1.IsShown = function(self) unrelatedReads = unrelatedReads + 1; return originalIsShown(self) end
+UIDropDownMenu_AddButton()
+assert(unrelatedReads == 0, 'closed bound pool triggered a scan of an unrelated dropdown')
 custom:Toggle(unrelated)
 assert(customText.font[1] == 'native-font' and custom.Backdrop.alpha == 1 and customLayer.alpha == 0, 'unrelated pool owner inherited skin')
 custom:Toggle(emoteOwner); assert(custom.Backdrop.alpha == 0)

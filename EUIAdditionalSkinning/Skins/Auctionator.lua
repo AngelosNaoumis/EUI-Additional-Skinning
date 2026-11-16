@@ -1,6 +1,13 @@
 local ADDON, ns = ...
 -- Auctionator. What is skinned, the frame map and the reasoning: docs/skins/Auctionator.md.
 local Headers -- set in build; the style below routes S.SortHeaderBar to it
+local RELEVANT_LOADS = {
+    Blizzard_AuctionUI = true,
+    Blizzard_CraftingOrders = true,
+    Blizzard_ObjectiveTracker = true,
+    Blizzard_Professions = true,
+    Blizzard_TradeSkillUI = true,
+}
 local function DefineSkin()
 ns.Skin("Auctionator", {
     available = function() return _G.Auctionator and _G.Auctionator.Tabs and _G.Auctionator.Tabs.State end,
@@ -648,7 +655,14 @@ ns.Skin("Auctionator", {
             after = After,
             setup = Setup,
             active = function() return not Stock() end,
-            event = function(_, event) if event == "ADDON_LOADED" then discoveryDirty = true end end,
+            event = function(_, event, name)
+                if event ~= "ADDON_LOADED" then return end
+                if type(name) == "string" and name:find("^Auctionator") then
+                    discoveryDirty = true
+                    return
+                end
+                return RELEVANT_LOADS[name] == true
+            end,
         }
     end,
 })

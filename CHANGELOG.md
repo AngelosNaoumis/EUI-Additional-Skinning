@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Reduced idle and warm-path skinning overhead: button label fitting now allocates nothing material
+  when reapplied and releases dead controls on Lua 5.1, closed custom popup pools no longer rescan
+  unrelated menus, and Auctionator ignores unrelated addon-load events.
+- Added performance regressions for all three paths and offline benchmarks for warm button label
+  fitting and closed popup pools; no polling or recurring timer was added.
 - Fixed GearQuest Forever's right-side page tabs so their eight-pixel overlap renders behind the
   main window while the exposed original buttons, states, tooltips and click handlers remain intact;
   navigation no longer causes any skin-owned positioning or repeated layering writes.

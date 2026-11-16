@@ -73,6 +73,17 @@ T.Fire('FAKE_EVENT'); T.Flush(); assert(calls[#calls] == 'after' and passes == b
 local seen = false
 for _, call in ipairs(calls) do if call == 'FAKE_EVENT' then seen = true end end
 assert(seen, 'skin event handler not called')
+-- Broad events can reject an unrelated occurrence without queuing a pass.
+local filteredRuns = 0
+ns.Skin('FilteredEvent', {available = function() return true end, events = {'FILTERED_EVENT'},
+    event = function(_, _, value) return value == 'wanted' end,
+    before = function() filteredRuns = filteredRuns + 1 end})
+T.Install('FilteredEvent')
+local filteredBaseline = filteredRuns
+T.Fire('FILTERED_EVENT', 'unrelated'); T.Flush()
+assert(filteredRuns == filteredBaseline, 'rejected event queued a pass')
+T.Fire('FILTERED_EVENT', 'wanted'); T.Flush()
+assert(filteredRuns == filteredBaseline + 1, 'accepted event did not queue a pass')
 for _, fn in ipairs(T.looks) do fn() end
 T.Flush(); assert(passes == before + 3, 'look change did not refresh')
 

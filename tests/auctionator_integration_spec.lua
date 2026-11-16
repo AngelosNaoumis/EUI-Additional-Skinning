@@ -117,8 +117,12 @@ assert(globalWalks == 1 and lazyInput.input and not lazyInput.padded, 'late conf
 AuctionatorConfigLoadedFrame = frame(); AuctionatorConfigLoadedFrame.name = 'AuctionatorConfigLoadedFrame'
 local loadedInput = frame('EditBox', AuctionatorConfigLoadedFrame)
 for _, f in ipairs(events) do
-    if f.events and f.events.ADDON_LOADED then f.scripts.OnEvent(f, 'ADDON_LOADED') end
+    if f.events and f.events.ADDON_LOADED then f.scripts.OnEvent(f, 'ADDON_LOADED', 'UnrelatedAddon') end
 end
-flush(); assert(globalWalks == 2 and loadedInput.input and not loadedInput.padded, 'addon-load discovery lost')
+flush(); assert(globalWalks == 1 and not loadedInput.input, 'unrelated addon load triggered Auctionator discovery')
+for _, f in ipairs(events) do
+    if f.events and f.events.ADDON_LOADED then f.scripts.OnEvent(f, 'ADDON_LOADED', 'Auctionator_Config') end
+end
+flush(); assert(globalWalks == 2 and loadedInput.input and not loadedInput.padded, 'Auctionator addon-load discovery lost')
 pairs = nativePairs
 print('PASS: Auctionator lazy tabs/dialogs/scrollbars, preserved constructors/actions, combat deferral, global discovery, unpadded settings inputs')

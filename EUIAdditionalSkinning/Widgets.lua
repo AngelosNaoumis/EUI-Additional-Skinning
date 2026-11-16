@@ -362,8 +362,11 @@ end
 -- font path/flags and intended size; only an oversized label is reduced, never below nine pixels by
 -- default. Per-button hooks recalculate after real text/width/font changes, with no global hook or
 -- polling. Set button.euiasAllowMultiline (or the label field) for an intentional multiline control.
-local fittedButtons = setmetatable({}, {__mode = "k"})
-local fittedLabels = setmetatable({}, {__mode = "k"})
+-- Values are weak too: on Lua 5.1 a weak-key table still retains an entry when its value points
+-- back to the key. Hook closures keep live states reachable; dead button/label cycles can collect.
+local fittedButtons = setmetatable({}, {__mode = "kv"})
+local fittedLabels = setmetatable({}, {__mode = "kv"})
+local EMPTY_TEXT_OPTIONS = {}
 local DEFAULT_TEXT_PADDING, DEFAULT_MIN_TEXT_SIZE, DEFAULT_ICON_GAP = 8, 9, 4
 
 local function PlainNumber(value)
@@ -381,7 +384,6 @@ local function SetLabelFont(state, path, size, flags)
     state.settingFont = true
     state.label:SetFont(path, size, flags or "")
     state.settingFont = false
-    state.appliedPath, state.appliedSize, state.appliedFlags = path, size, flags or ""
 end
 
 local function RestoreLabelFont(state)
@@ -520,7 +522,7 @@ function ns.FitButtonText(button, options)
         HookFit(label, "SetFont", fontChanged)
         HookFit(label, "SetFontObject", fontChanged)
     end
-    options = options or {}
+    options = options or EMPTY_TEXT_OPTIONS
     state.padding = PlainNumber(options.padding) and math.max(0, options.padding) or DEFAULT_TEXT_PADDING
     state.verticalPadding = PlainNumber(options.verticalPadding) and math.max(0, options.verticalPadding) or 2
     state.minSize = PlainNumber(options.minSize) and math.max(1, options.minSize) or DEFAULT_MIN_TEXT_SIZE

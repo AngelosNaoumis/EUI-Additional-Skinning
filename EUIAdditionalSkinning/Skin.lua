@@ -75,9 +75,10 @@ function ns.Skin(id, spec)
         events:RegisterEvent("PLAYER_REGEN_ENABLED")
         for _, event in ipairs(h.events or NONE) do events:RegisterEvent(event) end
         events:SetScript("OnEvent", function(_, event, ...)
-            if h.event then h.event(C, event, ...) end
+            -- A handler may reject an unrelated instance of a broad event such as ADDON_LOADED.
+            local wanted = not h.event or h.event(C, event, ...) ~= false
             -- After combat only work that was deferred resumes.
-            if ns.IsEnabled(module) and (event ~= "PLAYER_REGEN_ENABLED" or waiting) then C.refresh() end
+            if wanted and ns.IsEnabled(module) and (event ~= "PLAYER_REGEN_ENABLED" or waiting) then C.refresh() end
         end)
         if h.setup then h.setup(C) end
         module.refresh = C.refresh

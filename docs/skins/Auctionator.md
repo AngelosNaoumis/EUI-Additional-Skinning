@@ -102,7 +102,9 @@ plainly on the window, like the Auctionator (Info) tab.
 - Constant key lists live outside `Visit`, and refresh detection is cached per button.
 - The header strip is only re-anchored when it moves.
 - Hidden panels aren't walked after their first pass (framework).
-- Config discovery searches `_G` only after `ADDON_LOADED` or Auctionator's own initialiser.
+- Config discovery searches `_G` only after an Auctionator-prefixed `ADDON_LOADED` or Auctionator's
+  own initialiser. The few Blizzard modules that can add Auctionator surfaces still refresh the
+  visible tree, while unrelated addon-load events are ignored.
 
 `benchmarks/auctionator.lua` (about 650 frames, Selling open): about 2.3 ms and 80 KiB per warm
 refresh on the Lua 5.4 host.
