@@ -6,9 +6,6 @@ local WINDOWS = {GearQuestLogFrame = "window", GearQuestSimulateDialog = "window
 local METAL_EDGE = "Interface\\Tooltips\\UI-Tooltip-Border"
 local PORTRAIT_X, PORTRAIT_Y = 8, -8
 local NATIVE_PORTRAIT_X, NATIVE_PORTRAIT_Y = -6, 7
-local SIDE_TAB_X, SIDE_TAB_Y = 0, -72
-local SIDE_TAB_WIDTH, SIDE_TAB_HEIGHT, SIDE_TAB_GAP = 53, 53, 8
-local SIDE_TABS = {"tabLog", "tabLookup", "tabSimulator", "tabSettings"}
 local alignedWashes = setmetatable({}, {__mode = "k"})
 local dragHooked = setmetatable({}, {__mode = "k"})
 
@@ -58,31 +55,15 @@ local function FillAnimatedButton(button)
     wash:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -2, 2)
 end
 
-local function PositionSideTabs(frame)
-    local rail = frame and frame.sideTabRail
-    if not rail then return end
-    Anchor(rail, "TOPLEFT", frame, "TOPRIGHT", SIDE_TAB_X, SIDE_TAB_Y)
-    if rail.GetWidth and rail.SetSize
-        and (rail:GetWidth() ~= SIDE_TAB_WIDTH
-            or rail:GetHeight() ~= SIDE_TAB_HEIGHT * #SIDE_TABS + SIDE_TAB_GAP * (#SIDE_TABS - 1)) then
-        rail:SetSize(SIDE_TAB_WIDTH, SIDE_TAB_HEIGHT * #SIDE_TABS + SIDE_TAB_GAP * (#SIDE_TABS - 1))
-    end
-    local stride = SIDE_TAB_HEIGHT + SIDE_TAB_GAP
-    for index, key in ipairs(SIDE_TABS) do
-        local button = frame[key]
-        if button then
-            Anchor(button, "TOPLEFT", rail, "TOPLEFT", 0, -(index - 1) * stride)
-        end
-    end
-end
-
 ns.Skin("GearQuestForever", {
     label = "GearQuest Forever",
     available = function() local gq = _G.GearQuest; return type(gq) == "table" and gq.Log ~= nil end,
     -- The window is built once (Log:Init) and redrawn by its own methods; each queues one pass.
     setup = function(C)
         local gq = _G.GearQuest
-        for _, method in ipairs({"Init", "Show", "Toggle", "Refresh", "SetPageTab", "RefreshSettings",
+        -- SetPageTab synchronously calls one of the refresh methods below. Hooking it as well is
+        -- redundant, and its native LayoutSideTabs pass must remain the sole owner of tab geometry.
+        for _, method in ipairs({"Init", "Show", "Toggle", "Refresh", "RefreshSettings",
             "RefreshSimulator", "RefreshLookup", "ToggleSourceFilterMenu", "ToggleSpecPicker",
             "TogglePlayStylePanel", "ShowWeaponMenu", "ShowRangedMenu"}) do
             C.H.Hook(gq.Log, method, C.refresh)
@@ -110,7 +91,6 @@ ns.Skin("GearQuestForever", {
                     end
                     FillAnimatedButton(f.playStyleBtn)
                     FillAnimatedButton(f.trackBtn)
-                    PositionSideTabs(f)
                 end
                 C.AddRoot(f, mode)
             end

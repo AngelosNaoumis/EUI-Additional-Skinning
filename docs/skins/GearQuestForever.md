@@ -18,7 +18,7 @@ Built from GearQuest Forever 1.2.0's source (installed copy). **Not yet checked 
 | `GearQuestLanguageMenu` and the menus inside the window | Fill kept, 1px flat edge |
 | Buttons, edit boxes, checkboxes, scroll bars, horizontal sliders | EUI controls |
 | Hunt rows (`GearQuestLogRow<n>`), list tabs (`gqFill`) | Unchanged |
-| External page tabs (`frame.sideTabRail`) | Original icon/chrome/state art; rail aligned just outside the right edge with an 8px vertical gap |
+| External page tabs (`frame.sideTabRail`) | Original icon/chrome/state art and native GearQuest layout |
 | Tracker, toasts, portrait guide, minimap button, slot popup on the character sheet, gamepad UI | Unchanged (HUD and overlays) |
 
 ## Frame map
@@ -34,7 +34,7 @@ Built from GearQuest Forever 1.2.0's source (installed copy). **Not yet checked 
 | Portrait | `frame.PortraitContainer` (fallback: `gqPortraitHolder`); `GQ.PortraitGuide.hit` is its click/glow target |
 | Animated buttons | `frame.playStyleBtn` and `frame.trackBtn`; their native `introWash` textures keep their existing animation |
 | Right-side navigation | `frame.sideTabRail`; `tabLog`, `tabLookup`, `tabSimulator`, `tabSettings` are parented outside the window on `UIParent` |
-| Redraws hooked | `GQ.Log`: `Init`, `Show`, `Toggle`, `Refresh`, `SetPageTab`, `RefreshSettings`, `RefreshSimulator`, `RefreshLookup`, `ToggleSourceFilterMenu`, `ToggleSpecPicker`, `TogglePlayStylePanel`, `ShowWeaponMenu`, `ShowRangedMenu`; `GQ.Preview:EnsureDialog` |
+| Redraws hooked | `GQ.Log`: `Init`, `Show`, `Toggle`, `Refresh`, `RefreshSettings`, `RefreshSimulator`, `RefreshLookup`, `ToggleSourceFilterMenu`, `ToggleSpecPicker`, `TogglePlayStylePanel`, `ShowWeaponMenu`, `ShowRangedMenu`; `GQ.Preview:EnsureDialog` |
 
 ## Decisions
 
@@ -55,14 +55,16 @@ Built from GearQuest Forever 1.2.0's source (installed copy). **Not yet checked 
   code is untouched; no animation or update handler is added.
 - **Right-side buttons:** reusing Character Pane internals would couple this skin to protected
   Blizzard/EUI implementation details. Following the safe fallback, GearQuest's original buttons,
-  icons, selected/hover art, tooltips and click scripts stay unskinned. Only their rail anchor and
-  8px spacing are corrected, without wrappers or duplicate borders.
+  icons, selected/hover art, tooltips, click scripts and layout stay unskinned. GearQuest reapplies
+  their anchors and selected-state chrome together on every page change, so it remains the sole
+  geometry owner; the skin neither post-hooks `SetPageTab` nor moves the rail during later passes.
 
 ## Performance
 
-Passes run only from the hooked methods and the scan's show/click hooks: no timers, no polling.
-Portrait, bubble and side-tab anchors are compared before writing; each intro wash is anchored
-once. Per frame, the text check compares before writing; panels and menus are handled once
+Passes are one-shot and coalesced from the hooked methods and the scan's show/click hooks: no
+polling or recurring timer. Portrait and bubble anchors are compared before writing; each intro
+wash is anchored once. The side-tab rail is outside the scanned window and receives no skin work.
+Per frame, the text check compares before writing; panels and menus are handled once
 (`H.Once`).
 
 ## Known limits

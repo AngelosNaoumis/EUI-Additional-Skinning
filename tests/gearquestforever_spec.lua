@@ -7,7 +7,7 @@ local METAL = 'Interface\\Tooltips\\UI-Tooltip-Border'
 local calls = {}
 local function Method(name) return function() calls[name] = (calls[name] or 0) + 1 end end
 _G.GearQuest = {Log = {Init = Method('Init'), Show = Method('Show'), Refresh = Method('Refresh'), Toggle = Method('Toggle'),
-    SetPageTab = Method('SetPageTab')}, Preview = {EnsureDialog = Method('EnsureDialog')}}
+    }, Preview = {EnsureDialog = Method('EnsureDialog')}}
 
 -- GearQuestLogFrame (PortraitFrameTemplate), as Log:Init builds it.
 UIParent = T.Frame('Frame', nil, 'UIParent')
@@ -58,7 +58,7 @@ function scale:GetThumbTexture() return thumb end
 function scale:GetOrientation() return 'HORIZONTAL' end
 window.gqOuterBorder = T.Frame('Frame', window); window.gqOuterBorder.backdrop = {edgeFile = METAL, edgeSize = 16}
 window.sideTabRail = T.Frame('Frame')
-window.sideTabRail:SetPoint('TOPLEFT', window, 'TOPRIGHT', -8, -123)
+local page = 'log'
 local sideClicks, sideEnters, sideLeaves = {}, {}, {}
 for _, key in ipairs({'tabLog', 'tabLookup', 'tabSimulator', 'tabSettings'}) do
     local button = T.Frame('Button', window.sideTabRail)
@@ -66,6 +66,27 @@ for _, key in ipairs({'tabLog', 'tabLookup', 'tabSimulator', 'tabSettings'}) do
     button:SetScript('OnClick', sideClicks[key]); button:SetScript('OnEnter', sideEnters[key]); button:SetScript('OnLeave', sideLeaves[key])
     window[key] = button
 end
+local sideKeys = {'tabLog', 'tabLookup', 'tabSimulator', 'tabSettings'}
+local sidePages = {'log', 'lookup', 'simulator', 'settings'}
+local function NativeLayoutSideTabs()
+    calls.LayoutSideTabs = (calls.LayoutSideTabs or 0) + 1
+    window.sideTabRail:ClearAllPoints()
+    window.sideTabRail:SetPoint('TOPLEFT', window, 'TOPRIGHT', -8, -123)
+    window.sideTabRail:SetSize(53, 242)
+    for index, key in ipairs(sideKeys) do
+        local button = window[key]
+        button:ClearAllPoints()
+        button:SetPoint('TOPLEFT', window.sideTabRail, 'TOPLEFT', 0, -(index - 1) * 63)
+        button:SetSize(53, 53)
+        button.nativeSelected = page == sidePages[index]
+    end
+end
+function _G.GearQuest.Log:SetPageTab(nextPage)
+    calls.SetPageTab = (calls.SetPageTab or 0) + 1
+    page = nextPage
+    NativeLayoutSideTabs()
+end
+NativeLayoutSideTabs()
 local dialog = T.Frame('Frame', nil, 'GearQuestSimulateDialog')
 dialog.backdrop = {bgFile = 'Interface/DialogFrame/UI-DialogBox-Background'}
 
@@ -115,19 +136,53 @@ assert(trackClicks == 1 and playClicks == 1 and track:GetScript('OnEnter') == tr
     and track:GetScript('OnLeave') == trackLeave,
     'animated button actions or tooltip scripts changed')
 point, relative, relativePoint, x, y = window.sideTabRail:GetPoint(1)
-assert(point == 'TOPLEFT' and relative == window and relativePoint == 'TOPRIGHT' and x == 0 and y == -72
-    and window.sideTabRail:GetWidth() == 53 and window.sideTabRail:GetHeight() == 236,
-    'right-side tab rail not aligned to the window edge')
+assert(point == 'TOPLEFT' and relative == window and relativePoint == 'TOPRIGHT' and x == -8 and y == -123
+    and window.sideTabRail:GetWidth() == 53 and window.sideTabRail:GetHeight() == 242,
+    'skin changed GearQuest-owned right-side tab rail geometry')
 for index, key in ipairs({'tabLog', 'tabLookup', 'tabSimulator', 'tabSettings'}) do
     local button = window[key]
     local _, buttonRelative, _, buttonX, buttonY = button:GetPoint(1)
-    assert(buttonRelative == window.sideTabRail and buttonX == 0 and buttonY == -(index - 1) * 61,
-        'right-side tab spacing is inconsistent')
+    assert(buttonRelative == window.sideTabRail and buttonX == 0 and buttonY == -(index - 1) * 63
+        and button:GetWidth() == 53 and button:GetHeight() == 53,
+        'skin changed GearQuest-owned right-side tab geometry')
     assert(button:GetScript('OnClick') == sideClicks[key] and button:GetScript('OnEnter') == sideEnters[key]
         and button:GetScript('OnLeave') == sideLeaves[key],
         'right-side tab action or tooltip script changed')
     assert(not button.skin.Button and not button.skin.SquareIcon, 'right-side tab received duplicate EUI artwork')
 end
+
+-- Page navigation re-runs GearQuest's layout and selected-state styling. The skin must not queue a
+-- SetPageTab pass or restore competing coordinates after that native lifecycle finishes.
+local navigationTimers = #T.timers
+for round = 1, 3 do
+    for _, nextPage in ipairs({'lookup', 'simulator', 'settings', 'log'}) do
+        _G.GearQuest.Log:SetPageTab(nextPage)
+        if round == 1 and nextPage == 'lookup' then
+            assert(#T.timers == navigationTimers, 'SetPageTab queued a redundant skin refresh')
+        end
+        T.Flush()
+        T.Refresh('GearQuestForever')
+        local _, railRelative, _, railX, railY = window.sideTabRail:GetPoint(1)
+        assert(railRelative == window and railX == -8 and railY == -123
+            and window.sideTabRail:GetWidth() == 53 and window.sideTabRail:GetHeight() == 242,
+            'right-side tab rail moved or resized during repeated navigation')
+        for index, key in ipairs(sideKeys) do
+            local button = window[key]
+            local _, buttonRelative, _, buttonX, buttonY = button:GetPoint(1)
+            assert(buttonRelative == window.sideTabRail and buttonX == 0 and buttonY == -(index - 1) * 63
+                and button:GetWidth() == 53 and button:GetHeight() == 53,
+                'right-side tab moved or resized during repeated navigation')
+            assert(button.nativeSelected == (sidePages[index] == nextPage),
+                'native selected-state update was not preserved')
+            assert(button:GetScript('OnClick') == sideClicks[key]
+                and button:GetScript('OnEnter') == sideEnters[key]
+                and button:GetScript('OnLeave') == sideLeaves[key],
+                'right-side tab handler changed during repeated navigation')
+        end
+    end
+end
+assert(calls.LayoutSideTabs == 13 and calls.SetPageTab == 12,
+    'repeated navigation did not exercise every native layout pass')
 assert(not row.skin.Button and not tab.skin.Button, 'hunt row or tab boxed (their fill shows selection and quality)')
 assert(thumb.width == 8 and thumb.height == 14, 'horizontal slider not styled')
 
