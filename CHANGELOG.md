@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.2.0 - 2026-11-16
 
 - Reduced idle and warm-path skinning overhead: button label fitting now allocates nothing material
   when reapplied and releases dead controls on Lua 5.1, closed custom popup pools no longer rescan

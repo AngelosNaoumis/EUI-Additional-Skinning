@@ -87,4 +87,4 @@ Per frame, the text check compares before writing; panels and menus are handled 
 
 ## History
 
-- 2.1.0+: added (unreleased).
+- 2.2.0: added.

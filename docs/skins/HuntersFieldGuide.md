@@ -56,4 +56,4 @@ backdrops and the header are handled once (`H.Once`).
 
 ## History
 
-- 2.1.0+: added (unreleased).
+- 2.2.0: added.

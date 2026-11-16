@@ -3,7 +3,7 @@
 ## Notes: EllesmereUI skins for Altoholic, Attune, Auctionator, BugSack, Forever Dungeon Journal, GearQuest Forever, Hunter's Field Guide, Naowh Forever, OneForAll and What's Training?.
 ## Author: AngelosNaoumis
 ## X-License: MIT
-## Version: 2.1.0
+## Version: 2.2.0
 ## Dependencies: EllesmereUI
 ## OptionalDeps: EllesmereUIBlizzardSkin, EllesmereUIActionBars, EllesmereUIFriends, EllesmereUIBags
 ## SavedVariables: EUIAdditionalSkinningDB
