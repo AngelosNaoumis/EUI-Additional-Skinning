@@ -39,10 +39,12 @@ ns.RegisterScopedSkin("BugSack", "BugSack", {
             local previous
             for _, tabName in ipairs(tabNames) do
                 local tab = _G[tabName]
-                if H.Allowed(tab) and tab.ClearAllPoints and tab.SetPoint then
-                    tab:ClearAllPoints()
-                    if previous then tab:SetPoint("LEFT", previous, "RIGHT", 4, 0)
-                    else tab:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 12, 8) end
+                if H.Allowed(tab) then
+                    if tab.ClearAllPoints and tab.SetPoint and H.Once(tab, "layout") then
+                        tab:ClearAllPoints()
+                        if previous then tab:SetPoint("LEFT", previous, "RIGHT", 4, 0)
+                        else tab:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 12, 8) end
+                    end
                     previous = tab
                 end
             end
@@ -58,7 +60,7 @@ ns.RegisterScopedSkin("BugSack", "BugSack", {
                     local texture = f[getter] and f[getter](f)
                     if texture then H.Fade(texture) end
                 end
-                if f.ClearAllPoints and f.SetPoint and f.SetSize then
+                if f.ClearAllPoints and f.SetPoint and f.SetSize and H.Once(f, "layout") then
                     f:ClearAllPoints()
                     if name == "BugSackPrevButton" then
                         f:SetPoint("BOTTOMLEFT", BugSackFrame, "BOTTOMLEFT", 12, 44); f:SetSize(110, 28)

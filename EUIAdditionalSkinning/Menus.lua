@@ -156,7 +156,6 @@ local function Restore(f)
     end
     if r.layer then r.layer:SetAlpha(0) end
     if r.fill then r.fill:SetAlpha(0) end
-    if r.accent then r.accent:SetAlpha(0) end
     for _, marker in pairs(r.markers or {}) do marker:SetAlpha(0) end
     for _, box in pairs(r.markerBoxes or {}) do box:SetAlpha(0) end
     for _, arrow in pairs(r.arrows or {}) do arrow:SetAlpha(0) end
@@ -310,27 +309,19 @@ local function ModernStyle(f, binding, owner)
         -- the menu. An unmanaged child frame can cover reused menu entries.
         fill = f:AttachTexture(); fill:SetDrawLayer("BACKGROUND", -8); fill:SetAllPoints()
         f.euiasMenuFill = fill
-        local accent = f:AttachTexture(); accent:SetDrawLayer("OVERLAY", 7)
-        accent:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1); accent:SetPoint("TOPRIGHT", f, "TOPRIGHT", -1, -1); accent:SetHeight(2)
-        f.euiasMenuAccent = accent
         f:HookScript("OnHide", function() Restore(f) end)
     end
     if not r or not r.active or r.fill ~= fill then
         r = {modern = true, active = true, binding = binding, owner = owner, fill = fill,
-            accent = f.euiasMenuAccent, alpha = {}, fonts = {}, colors = {},
+            alpha = {}, fonts = {}, colors = {},
             objectFonts = {}, appliedFonts = {}, appliedColors = {}}
         records[f] = r
     end
     local S = binding.S
     fill:SetColorTexture(S.GetPanelColor()); fill:SetAlpha(1)
-    local red, green, blue
-    if ns.AccentBarColor then red, green, blue = ns.AccentBarColor(S) else red, green, blue = S.GetAccentColor() end
-    r.accent:SetColorTexture(red, green, blue, 1)
-    r.accent:SetAlpha(not (binding.options and binding.options.noAccent)
-        and (not ns.AccentBarShown or ns.AccentBarShown()) and 1 or 0)
     Fade(r, f.Backdrop); Fade(r, f.MenuBackdrop); Fade(r, f.NineSlice)
     for _, region in ipairs({f:GetRegions()}) do
-        if region ~= fill and region ~= r.accent and region.GetDrawLayer then
+        if region ~= fill and region.GetDrawLayer then
             local layer = region:GetDrawLayer()
             if layer == "BACKGROUND" or layer == "BORDER" then Fade(r, region) end
         end
@@ -394,7 +385,6 @@ local function Style(f, binding, owner)
         layer:SetFrameLevel(math.max(0, f:GetFrameLevel() - 1))
         layer:EnableMouse(false)
         if shell then shell(layer) else S.Shell(layer, {noTopBar = true}) end
-        if not (options and options.noAccent) then ns.AttachAccent(S, layer) end
         layer:SetAlpha(0)
         r.layers[key] = layer
     end

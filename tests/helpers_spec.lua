@@ -1,5 +1,5 @@
 -- Shared helpers: Once, Pixel, Shift, Strip (keeps art), Wash, ScrollBar (both generations),
--- Glyph (and its no-atlas fallback), Squared (pooled re-square), Pooled (row restyle), Font skip.
+-- Glyph (and its no-atlas fallback), Squared (pooled re-square), Pooled (row restyle), readable/secret-safe colours, Font skip.
 local T = dofile('tests/support.lua')
 local ns = T.Load()
 local H = ns.CreateSkinHelper(T.S, {skin = T.S})
@@ -15,6 +15,19 @@ assert(H.Pixel(f) == 0.5, 'Pixel')
 f:SetPoint('TOPLEFT', nil, 'TOPLEFT', 10, -5); f:SetPoint('BOTTOMRIGHT', nil, 'BOTTOMRIGHT', -3, 4)
 H.Shift(f, 2, 1)
 assert(f.points[1][4] == 12 and f.points[1][5] == -4 and f.points[2][4] == -1 and f.points[2][5] == 5, 'Shift')
+
+-- Readable: dark ink is lifted, while any non-numeric or secret channel is left untouched.
+local ink = T.FontString(T.Frame(), 'Ink')
+ink.textColor = {0.1, 0.1, 0.1, 1}; H.Readable(ink)
+assert(ink.textColor[1] == 1 and ink.textColor[2] == 1 and ink.textColor[3] == 1, 'Readable dark ink')
+local writes, setTextColor = 0, ink.SetTextColor
+ink.SetTextColor = function(self, ...) writes = writes + 1; return setTextColor(self, ...) end
+ink.textColor = {0.1, {}, 0.1, 1}; H.Readable(ink)
+assert(writes == 0, 'Readable used a non-numeric colour channel')
+ink.textColor = {0.1, 0.2, 0.1, 1}
+issecretvalue = function(value) return value == 0.2 end
+H.Readable(ink); issecretvalue = nil
+assert(writes == 0, 'Readable used a secret colour channel')
 
 -- Strip clears the panel but restores its spinner; once per frame.
 local inset = T.Frame()
@@ -82,4 +95,4 @@ H.Ace(boxFrame); assert(#boxFrame.regions == edges and edges == 7, 'checkbox edg
 checkWidget.disabled = true; H.Ace(boxFrame); assert(checkWidget.check.vertex[1] == 0.5, 'disabled check is grey')
 checkWidget:SetDisabled(true); assert(refreshed == 1, 'SetDisabled does not refresh')
 assert(not H.Ace(T.Frame()), 'plain frame claimed')
-print('PASS: Once, Pixel, Shift, Strip, Wash, ScrollBar, Glyph and its fallback, Squared refills, Pooled rows, Font skip, Ace dropdown/checkbox')
+print('PASS: Once, Pixel, Shift, Readable secret safety, Strip, Wash, ScrollBar, Glyph and its fallback, Squared refills, Pooled rows, Font skip, Ace dropdown/checkbox')

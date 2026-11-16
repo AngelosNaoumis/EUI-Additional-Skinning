@@ -2,7 +2,7 @@
 local timers, errors, looks = {}, {}, {}
 local combat, accent = false, 0.4
 local ns = {IsEnabled = function(module) return module and module.enabled end,
-    AttachAccent = function(_, f) f.accent = true end}
+    AttachAccent = function() end}
 C_Timer = {After = function(_, fn) timers[#timers + 1] = fn end}
 InCombatLockdown = function() return combat end
 geterrorhandler = function() return function(e) errors[#errors + 1] = e end end
@@ -97,7 +97,8 @@ assert(DropDownList1.MenuBackdrop.alpha == 0 and text.font[1] == 'eui-font')
 assert(text.color[2] == 0.82 and text.text == '|Temote-art:0|t xqcA' and button.callback() == 'emote-insert-original' and button.disabled)
 assert(arrow.color[1] == accent and highlight.color[4] == 0.1)
 local layer = DropDownList1.children[#DropDownList1.children]
-assert(layer.shell and layer.accent and layer.mouse == false and layer.level < DropDownList1:GetFrameLevel())
+assert(layer.shell and not layer.accent and layer.mouse == false and layer.level < DropDownList1:GetFrameLevel(),
+    'legacy menu acquired a retired top accent stripe')
 -- Submenus inherit root ownership, retaining independent content/actions.
 DropDownList2 = frame('Frame', 'DropDownList2'); DropDownList2.shown = true; DropDownList2.dropdown = button
 DropDownList2.Backdrop = frame('Frame', nil, DropDownList2)
@@ -278,13 +279,13 @@ ns.BindPopupList(S, emoteModule, emoteOwner, modern)
 assert(modern.NineSlice.alpha == 0, 'modern menu native border was left visible')
 assert(modernText:GetFont() == 'eui-font' and modernRow.callback() == 'modern-native-action', 'modern menu font/action lost')
 assert(modernText.textColor[1] == 0.5 and modernText.textColor[4] == 0.8, 'modern disabled/text colours were changed')
-assert(#modern.children == 2 and attached == 2, 'modern menu created an unmanaged overlay frame')
-ns.RefreshPopupMenusNow(); assert(attached == 2, 'warm modern menu refresh allocated duplicate regions')
+assert(#modern.children == 2 and attached == 1, 'modern menu created an unmanaged overlay frame or top accent stripe')
+ns.RefreshPopupMenusNow(); assert(attached == 1, 'warm modern menu refresh allocated duplicate regions')
 for _ = 1, 20 do
     assert(toggleModern() == 'toggle-native' and modernText:GetFont() == 'eui-font', 'checkbox refresh reset the modern menu font')
     ns.RefreshPopupMenusNow()
 end
-assert(#description.initializers == 1 and attached == 2, 'checkbox refresh duplicated initializers or menu regions')
+assert(#description.initializers == 1 and attached == 1, 'checkbox refresh duplicated initializers or menu regions')
 emoteModule.enabled = false; toggleModern()
 assert(modernText:GetFontObject() == nativeFont, 'disabled skin initializer still changed menu fonts')
 emoteModule.enabled = true; toggleModern()
@@ -299,26 +300,26 @@ assert(modernText:GetFontObject() == nativeFont, 'modern font-object restoration
 for _ = 1, 50 do
     -- Blizzard discards compositor-assigned fields and returns its textures to
     -- the pool. A new acquisition can have a different level and new rows.
-    modern.euiasMenuFill, modern.euiasMenuAccent = nil, nil
+    modern.euiasMenuFill = nil
     modern.owner, modern.shown, attached = emoteOwner, true, 0
     modernText.fontObject = nativeFont
     ns.BindPopupList(S, emoteModule, emoteOwner, modern)
     assert(modern.euiasMenuFill.alpha == 1 and modernText:GetFont() == 'eui-font', 'reopened menu lost its background or text')
-    assert(attached == 2 and #modern.children == 2 and modernRow.callback() == 'modern-native-action')
+    assert(attached == 1 and #modern.children == 2 and modernRow.callback() == 'modern-native-action')
     modern:Hide()
 end
-assert(allocatedFonts == 1 and #textures == 2, 'modern menu font/texture pool grew on every open')
+assert(allocatedFonts == 1 and #textures == 1, 'modern menu font/texture pool grew on every open')
 modern.owner, modern.shown = emoteOwner, true
 ns.RefreshPopupMenusNow()
 -- A renderer reset may precede our hide callback. Stale snapshot restoration
 -- must not modify regions that now belong to an unrelated pooled menu.
-modern.euiasMenuFill, modern.euiasMenuAccent = nil, nil
+modern.euiasMenuFill = nil
 modern.owner = unrelated; modern.NineSlice.alpha = 1; modernText.fontObject = nativeFont
 ns.RefreshPopupMenusNow()
 assert(modernText:GetFontObject() == nativeFont and modern.NineSlice.alpha == 1, 'stale acquisition restored into a reused menu')
 flush()
 assert(#errors == 0, table.concat(errors, '\n'))
-print('PASS: scoped legacy/library popup/submenu styling, native reuse/restoration, preserved emotes/actions/colors, live accents, independent toggles and combat deferral')
+print('PASS: scoped legacy/library popup/submenu styling, native reuse/restoration, no top accents, preserved actions/colors, independent toggles and combat deferral')
 
 do
 -- Shared confirmation dialogs: texture-only, no font or action setters.
