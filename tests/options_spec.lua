@@ -1,4 +1,4 @@
--- Options: EUI plugin section, Debug Mode toggle, Button style (Game Menu or window, live), one row per catalog entry (each TOC skin defines one), rows locked while their addon is not enabled, a debounced reload prompt on every change, switch-on applied at once, /eas options.
+-- Options: EUI plugin section, Debug Mode toggle, Button style (default and per skin, Game Menu or window, live), one row per catalog entry (each TOC skin defines one), rows locked while their addon is not enabled, a debounced reload prompt on every change, switch-on applied at once, /eas options.
 local T = dofile('tests/support.lua')
 local plugin, popups, opened, refreshes = nil, {}, nil, 0
 EllesmereUI.RegisterPlugin = function(id, spec) plugin = {id = id, spec = spec}; return true end
@@ -43,16 +43,24 @@ ns.profiling = true
 debug.setValue(false); T.Flush()
 assert(EUIAdditionalSkinningDB.debug == nil and not ns.profiling and #popups == before, 'Debug Mode off left perf timing on')
 
--- Button style: Game Menu by default. A button the facade styles gets one inset 2px inside it
--- with the Popup Menu button colour and EllesmereUI's configured border (the Game Menu's calls);
--- the window fill and border are hidden. The dropdown switches live, both ways, without a reload.
-local styleRow = assert(byText['Button style'], 'no Button style setting on the Skins page')
-assert(styleRow.getValue() == 'gamemenu', 'Button style not Game Menu by default')
+-- Button style: EllesmereUI windows by default, Game Menu opt-in. In the Game Menu style a button
+-- the facade styles gets one inset 2px inside it with the Popup Menu button colour and
+-- EllesmereUI's configured border (the Game Menu's calls); the window fill and border are hidden.
+-- The dropdown switches live, both ways, without a reload.
+local styleRow = assert(byText['Default button style'], 'no Default button style setting on the Skins page')
+assert(styleRow.getValue() == 'window', 'Button style not EllesmereUI windows by default')
 local borders, ffd = {}, {}
 EllesmereUI._applyBlizzardConfiguredBorder = function(owner, prefix, legacy) borders[#borders + 1] = {owner, prefix, legacy} end
 EllesmereUI.PP = {HideBorder = function(f) f.ppHidden = true end, ShowBorder = function(f) f.ppHidden = false end}
 EllesmereUI._ModuleNS = {EllesmereUIBlizzardSkin = {WSkin = {GetFFD = function(f) ffd[f] = ffd[f] or {}; return ffd[f] end}}}
 EllesmereUIDB = {popupMenuButtonBackgroundColor = {r = 0.54, g = 0, b = 0, a = 0.4}}
+local early = T.Frame('Button', T.Frame('Frame')); ffd[early] = {bg = T.Texture(early, 'BACKGROUND')}
+ns.StyledFacade(T.S).Button(early)
+assert(#early.children == 0 and #borders == 0 and ffd[early].bg.alpha == 1, 'a button changed in the default (window) style')
+styleRow.setValue('gamemenu'); T.Flush()
+assert(EUIAdditionalSkinningDB.buttonStyle == 'gamemenu' and styleRow.getValue() == 'gamemenu' and #early.children == 1,
+    'choosing Game Menu as the default not saved or not applied live')
+borders = {}
 local facade = ns.StyledFacade(T.S)
 local btn = T.Frame('Button', T.Frame('Frame')); btn.label = T.FontString(btn, 'Search')
 ffd[btn] = {bg = T.Texture(btn, 'BACKGROUND'), hover = T.Texture(btn, 'HIGHLIGHT')}
@@ -68,12 +76,32 @@ facade.Button(btn)
 assert(#btn.children == 1 and #borders == 1, 'a second pass rebuilt the inset or the border')
 before = #popups
 styleRow.setValue('window'); T.Flush()
-assert(EUIAdditionalSkinningDB.buttonStyle == 'window' and not inset.shown and ffd[btn].bg.alpha == 1 and btn.ppHidden == false
+assert(EUIAdditionalSkinningDB.buttonStyle == nil and not inset.shown and ffd[btn].bg.alpha == 1 and btn.ppHidden == false
     and ffd[btn].hover.all == btn and #popups == before, 'switching to the window style is not live')
 styleRow.setValue('gamemenu'); T.Flush()
-assert(EUIAdditionalSkinningDB.buttonStyle == nil and inset.shown and ffd[btn].bg.alpha == 0 and btn.ppHidden == true
+assert(EUIAdditionalSkinningDB.buttonStyle == 'gamemenu' and inset.shown and ffd[btn].bg.alpha == 0 and btn.ppHidden == true
     and ffd[btn].hover.all == inset and #btn.children == 1, 'switching back to the Game Menu style is not live')
 -- Without EllesmereUI's configured-border call, buttons keep the window style untouched.
+-- Per skin: one row per frame skin (none for Naowh Forever), "Default" until set; a skin's own
+-- choice wins over the default, live; "Default" again clears it.
+for _, entry in ipairs(ns.skinCatalog) do
+    local row = byText[entry.label .. ' buttons']
+    if entry.integration then assert(not row, entry.label .. ' has a button style row')
+    else assert(row and row.getValue() == 'default', entry.label .. ' has no button style row set to Default') end
+end
+local altoRow = byText['Altoholic buttons']
+assert(altoRow.disabled() and altoRow.disabledTooltip():find('not enabled', 1, true), 'a skin row open while its addon is off')
+local alto = T.Frame('Button', T.Frame('Frame')); ffd[alto] = {bg = T.Texture(alto, 'BACKGROUND')}
+ns.StyledFacade(T.S, 'Altoholic').Button(alto)
+assert(alto.children[1] and alto.children[1].shown, 'Altoholic button not in the default (Game Menu) style')
+altoRow.setValue('window'); T.Flush()
+assert(EUIAdditionalSkinningDB.buttonStyles.Altoholic == 'window' and altoRow.getValue() == 'window', 'per-skin choice not saved')
+assert(not alto.children[1].shown and ffd[alto].bg.alpha == 1, 'per-skin choice not applied live')
+assert(inset.shown and ffd[btn].bg.alpha == 0, 'one skin\'s choice changed another skin\'s buttons')
+styleRow.setValue('window'); styleRow.setValue('gamemenu'); T.Flush()
+assert(not alto.children[1].shown, 'the default overrode a skin\'s own choice')
+altoRow.setValue('default'); T.Flush()
+assert(EUIAdditionalSkinningDB.buttonStyles == nil and alto.children[1].shown, '"Default" did not hand the skin back to the default')
 EllesmereUI._applyBlizzardConfiguredBorder = nil
 local plain = T.Frame('Button', T.Frame('Frame')); ffd[plain] = {bg = T.Texture(plain, 'BACKGROUND')}
 facade.Button(plain)

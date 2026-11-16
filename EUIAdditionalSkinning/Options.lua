@@ -34,6 +34,9 @@ local function Locked(entry)
     if MasterOff() then return "Turn on Enable Skinning." end
 end
 
+-- Kept under its own name: the EllesmereUI rows below define their own Locked().
+local EntryLocked = Locked
+
 local function SkinRow(entry)
     return {type = "toggle", text = entry.label,
         tooltip = "Skin " .. entry.label .. " in the EllesmereUI style. It also needs its toggle on EUI's Window Skins page.",
@@ -64,6 +67,35 @@ local function EllesmereRow(text, key, tooltip)
         setValue = function(on) SetEllesmere(key, on) end}
 end
 
+-- Button style rows: the default for every skin, and one per skin that can override it.
+local STYLE_NAMES = {gamemenu = "Game Menu", window = "EllesmereUI windows"}
+local function ButtonDefaultRow()
+    return {type = "dropdown", text = "Default button style",
+        tooltip = "How buttons in the skinned addons look, unless a skin below has its own choice. EllesmereUI windows (default): the window skins' dark grey button. Game Menu: your EllesmereUI Popup Menu button colour and border, like the Game Menu.",
+        values = STYLE_NAMES, order = {"window", "gamemenu"},
+        getValue = function() return ns.ButtonStyle() end,
+        setValue = function(value)
+            ns.DB().buttonStyle = value == "gamemenu" and "gamemenu" or nil
+            ns.RefreshButtonStyle()
+        end}
+end
+local function SkinButtonRow(entry)
+    return {type = "dropdown", text = entry.label .. " buttons",
+        tooltip = "Button style for " .. entry.label .. ". Default follows the default button style above.",
+        values = {default = "Default", gamemenu = STYLE_NAMES.gamemenu, window = STYLE_NAMES.window},
+        order = {"default", "window", "gamemenu"},
+        disabled = function() return EntryLocked(entry) ~= nil end,
+        disabledTooltip = function() return EntryLocked(entry) end, rawTooltip = true,
+        getValue = function() return ns.SkinButtonSetting(entry.id) end,
+        setValue = function(value)
+            local db = ns.DB()
+            if type(db.buttonStyles) ~= "table" then db.buttonStyles = {} end
+            db.buttonStyles[entry.id] = (value == "gamemenu" or value == "window") and value or nil
+            if next(db.buttonStyles) == nil then db.buttonStyles = nil end
+            ns.RefreshButtonStyle()
+        end}
+end
+
 -- Builds the Skins page; also run by EUI's search pre-build with a stub factory (no side effects).
 local function BuildSkins(_, parent, y)
     local W = _G.EllesmereUI.Widgets
@@ -81,20 +113,21 @@ local function BuildSkins(_, parent, y)
             ns.DB().debug = on and true or nil
             if not on then ns.profiling = false end
         end}); y = y - h
-    -- Live, no reload: it repaints the buttons already styled (Widgets.lua).
-    _, h = W:DualRow(parent, y, {type = "dropdown", text = "Button style",
-        tooltip = "How buttons in the skinned addons look. Game Menu: your EllesmereUI Popup Menu button colour and border, like the Game Menu. EllesmereUI windows: the window skins' dark grey button.",
-        values = {gamemenu = "Game Menu", window = "EllesmereUI windows"}, order = {"gamemenu", "window"},
-        getValue = ns.ButtonStyle,
-        setValue = function(value)
-            ns.DB().buttonStyle = value == "window" and "window" or nil
-            ns.RefreshButtonStyle()
-        end},
-        {type = "label", text = ""}); y = y - h
     _, h = W:Spacer(parent, y, 10); y = y - h
     _, h = W:SectionHeader(parent, "SKINS", y); y = y - h
     local rows = {}
     for _, entry in ipairs(ns.skinCatalog) do rows[#rows + 1] = SkinRow(entry) end
+    for index = 1, #rows, 2 do
+        _, h = W:DualRow(parent, y, rows[index], rows[index + 1] or {type = "label", text = ""}); y = y - h
+    end
+    -- Button style: the default, then each frame skin's own choice. Live, no reload: it repaints
+    -- the buttons already styled (Widgets.lua).
+    _, h = W:Spacer(parent, y, 10); y = y - h
+    _, h = W:SectionHeader(parent, "BUTTON STYLE", y); y = y - h
+    rows = {ButtonDefaultRow()}
+    for _, entry in ipairs(ns.skinCatalog) do
+        if not entry.integration then rows[#rows + 1] = SkinButtonRow(entry) end
+    end
     for index = 1, #rows, 2 do
         _, h = W:DualRow(parent, y, rows[index], rows[index + 1] or {type = "label", text = ""}); y = y - h
     end

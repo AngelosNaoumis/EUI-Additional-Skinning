@@ -105,7 +105,7 @@ the modules load. That replacement is the addon's one exception to "post-hooks o
 
 `EUIAdditionalSkinningDB`: `disabled`, `skins[id]`, `naowh` (the Naowh keys and the `manual`
 border table, validated by `Integrations/NaowhForever/Config.lua`), `euiWindows`, `euiBags`,
-`debug` (Debug Mode), `buttonStyle` (`"window"`; unset = Game Menu), `dumps` (dev tools). The
+`debug` (Debug Mode), `buttonStyle` (`"gamemenu"`; unset = EllesmereUI windows), `buttonStyles[id]` (per skin; unset = the default), `dumps` (dev tools). The
 options section (`Options.lua`,
 EUI's plugin API) has a Skins page (the master switch, one row per catalog entry, and the
 EllesmereUI window and bag borders, then the border settings: the style, copied or manual, and
@@ -117,10 +117,11 @@ save at once and a reload is offered once the player stops changing things.
 ## Button style
 
 Core wraps the facade EllesmereUI hands each skin (`ns.StyledFacade`, `Widgets.lua`): after
-`S.Button` styles a button, the Game Menu style (default) adds an inset 2px inside it with the
+`S.Button` styles a button, the Game Menu style (opt-in; the default is the window style) adds an inset 2px inside it with the
 Popup Menu button colour (`EllesmereUIDB.popupMenuButtonBackgroundColor`) and EllesmereUI's
 configured `popupMenuButton` border, and hides the window fill and border; the window style shows
-them again. Per button the applied style is remembered, so passes repeat nothing; the Skins page
+them again. The style is the skin's own (`buttonStyles[id]`, the facade knows its skin) or the
+default (`buttonStyle`). Per button the applied style is remembered, so passes repeat nothing; the Skins page
 setting repaints every styled button at once. The inset is in `ns.OwnFrames`.
 
 ## Menus

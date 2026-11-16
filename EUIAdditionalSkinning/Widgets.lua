@@ -353,19 +353,30 @@ function ns.CreateSoftSkin(S, module, borderless)
     return setmetatable(proxy, {__index = S})
 end
 
--- Button style (Skins page): "gamemenu" (the default) draws every button a skin styles through
+-- Button style (Skins page): "window" (the default) keeps EllesmereUI's window button; "gamemenu"
+-- draws every button a skin styles through
 -- the facade like EllesmereUI's Game Menu buttons: an inset 2px inside the button, filled with the
 -- Popup Menu button colour and given its configured border (the calls the Game Menu uses);
--- EllesmereUI's window-button fill and border are hidden, not removed. "window" keeps EllesmereUI's
--- window button. Switching is live (ns.RefreshButtonStyle). Without those EllesmereUI calls every
--- button keeps the window style.
-function ns.ButtonStyle()
+-- EllesmereUI's window-button fill and border are hidden, not removed. Each skin can override the default (buttonStyles[id]). Switching is live
+-- (ns.RefreshButtonStyle). Without those EllesmereUI calls every button keeps the window style.
+local function Valid(style) return style == "gamemenu" or style == "window" end
+-- The style for a skin's buttons (id), or the default (no id).
+function ns.ButtonStyle(id)
     local db = EUIAdditionalSkinningDB
-    return db and db.buttonStyle == "window" and "window" or "gamemenu"
+    local own = id and db and type(db.buttonStyles) == "table" and db.buttonStyles[id]
+    if Valid(own) then return own end
+    return db and db.buttonStyle == "gamemenu" and "gamemenu" or "window"
+end
+-- A skin's own setting: "gamemenu", "window", or "default" (follows the default style).
+function ns.SkinButtonSetting(id)
+    local db = EUIAdditionalSkinningDB
+    local own = db and type(db.buttonStyles) == "table" and db.buttonStyles[id]
+    return Valid(own) and own or "default"
 end
 
 local buttonState = setmetatable({}, {__mode = "k"}) -- button -> applied style
 local buttonInsets = setmetatable({}, {__mode = "k"}) -- button -> its Game Menu inset
+local buttonOwners = setmetatable({}, {__mode = "k"}) -- button -> the skin id that styled it
 
 local function ButtonParts(btn)
     local E = _G.EllesmereUI
@@ -377,7 +388,7 @@ end
 
 local function PaintButton(btn)
     local E, fill, pp, hover = ButtonParts(btn)
-    local menu = ns.ButtonStyle() == "gamemenu" and E and E._applyBlizzardConfiguredBorder ~= nil
+    local menu = ns.ButtonStyle(buttonOwners[btn]) == "gamemenu" and E and E._applyBlizzardConfiguredBorder ~= nil
     local style = menu and "gamemenu" or "window"
     if buttonState[btn] == style then return end
     local inset = buttonInsets[btn]
@@ -415,13 +426,16 @@ local function PaintButton(btn)
     buttonState[btn] = style
 end
 
--- The facade a skin receives, with S.Button drawing the chosen button style afterwards.
-function ns.StyledFacade(S)
+-- The facade skin id receives, with S.Button drawing that skin's button style afterwards.
+function ns.StyledFacade(S, id)
     if type(S) ~= "table" or type(S.Button) ~= "function" then return S end
     local button = S.Button
     return setmetatable({Button = function(btn, ...)
         local result = button(btn, ...)
-        if type(btn) == "table" and btn.GetObjectType then PaintButton(btn) end
+        if type(btn) == "table" and btn.GetObjectType then
+            buttonOwners[btn] = id
+            PaintButton(btn)
+        end
         return result
     end}, {__index = S})
 end
