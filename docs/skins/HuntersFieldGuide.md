@@ -13,7 +13,7 @@ Built from Hunter's Field Guide 0.8.7's source (installed copy). **Not yet check
 
 | Window | Look |
 | --- | --- |
-| `FieldGuideFrame` (both the "Forever spellbook" and "classic" looks) | EUI shell; header backplate faded; text readable |
+| `FieldGuideFrame` (both the "Forever spellbook" and "classic" looks) | EUI shell; portrait kept inside the top-left corner; header backplate faded; text readable |
 | `FieldGuideExport` | EUI shell |
 | `FieldGuideTargetPanel`, `FieldGuideFilterMenu`, icon slots | Fill kept, 1px flat edge |
 | Buttons, the search box, checkboxes, scroll bars | EUI controls |
@@ -39,15 +39,19 @@ Built from Hunter's Field Guide 0.8.7's source (installed copy). **Not yet check
 - **Entries and tabs** keep their spellbook art: elite, tamed, favourite and selected marks are
   drawn on it, and the generic icon squaring would break the masked icons.
 - **The page art** is a region on the window, so the shell fades it like any window art.
+- **Portrait:** only `PortraitContainer` is re-anchored to `(8, -8)` inside the Forever window.
+  The masked portrait and the home button anchored to it keep their original art, click and tooltip.
 
 ## Performance
 
 Passes run only from the hooked methods and the scan's show/click hooks: no timers, no polling.
-The text check compares before writing; backdrops and the header are handled once (`H.Once`).
+The portrait anchor is compared before writing. The text check also compares before writing;
+backdrops and the header are handled once (`H.Once`).
 
 ## Known limits
 
-- The portrait (the journal's own masked icon and home button) stays as drawn on the shell.
+- The classic look's already-contained portrait stays at its native position; the Forever
+  `PortraitFrameTemplate` container receives the corrective anchor.
 - The toast and the minimap button keep the journal's look.
 
 ## History

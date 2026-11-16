@@ -9,7 +9,7 @@ FontObjects `Menus.lua` creates on first use. Nothing else.
 | Layer | Files | Owns |
 | --- | --- | --- |
 | Registry | `Catalog.lua`, `Core.lua` | The integration list; lazy activation; EUI toggles; switches; `/eas` |
-| Shared helpers | `Accent.lua`, `Widgets.lua`, `Helpers.lua` | `H` (scan, hooks, fades, fonts, shells, building blocks), soft-skin proxy, accent bar |
+| Shared helpers | `Accent.lua`, `Widgets.lua`, `Helpers.lua` | `H` (scan, hooks, fades, fonts, shells, building blocks), soft-skin proxy, no-top-accent compatibility policy |
 | Skin shapes | `Skin.lua`, `Scoped.lua` | `ns.Skin` (house shape), `ns.RegisterScopedSkin` (the scoped shape) |
 | Menus | `Menus.lua` | Dropdown and popup menus bound by a skin |
 | Skins | `Skins/*.lua` | One target addon each |

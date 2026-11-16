@@ -1,4 +1,4 @@
--- Hunter's Field Guide: the journal and export window shelled (the spellbook page art goes with the shell); its X a close button only; spellbook ink made readable with its hue (gold and white text kept); the header backplate faded; beast entries, icon tabs and the home button left as drawn; icon slots and the filter menu a flat edge; buttons and the search box styled; its methods post-hooked; warm passes create nothing; nothing without the addon.
+-- Hunter's Field Guide: journal/export shells; contained portrait with home hit target preserved; readable spellbook text; entries/tabs kept; controls; post-hooks, idempotence and addon gate.
 local T = dofile('tests/support.lua')
 local ns = T.Load('Skins/HuntersFieldGuide.lua')
 
@@ -13,6 +13,8 @@ _G.HuntersFieldGuide = guide
 local window = T.Frame('Frame', nil, 'FieldGuideFrame')
 local page = T.Texture(window, 'BACKGROUND'); page.atlas = 'spellbook-Page-Right-C60'
 window.CloseButton = T.Frame('Button', window)
+window.PortraitContainer = T.Frame('Frame', window)
+window.PortraitContainer:SetPoint('TOPLEFT', window, 'TOPLEFT', -3, 5)
 window.header = T.Frame('Frame', window); window.header.text = T.FontString(window.header, 'Wolves')
 local plate = T.Texture(window.header, 'BACKGROUND'); plate.atlas = 'spellbook-list-backplate'
 local divider = T.Texture(window.header, 'ARTWORK'); divider.atlas = 'spellbook-divider'
@@ -20,6 +22,9 @@ window.header.text:SetTextColor(0.2, 0.12, 0.05) -- SPELLBOOK_FONT_COLOR ink
 local good = T.FontString(window, 'Tameable'); good:SetTextColor(0.04, 0.34, 0.04)
 local gold = T.FontString(window, 'Gold name'); gold:SetTextColor(1, 0.82, 0)
 window.home = T.Frame('Button', window)
+local homeClicks = 0
+local homeClick, homeEnter, homeLeave = function() homeClicks = homeClicks + 1 end, function() end, function() end
+window.home:SetScript('OnClick', homeClick); window.home:SetScript('OnEnter', homeEnter); window.home:SetScript('OnLeave', homeLeave)
 local entry = T.Frame('Button', window); entry.backplate = T.Texture(entry, 'BACKGROUND'); entry.icon = T.Texture(entry, 'ARTWORK')
 local tab = T.Frame('Button', window); tab.active = T.Texture(tab, 'ARTWORK')
 local back = T.Frame('Button', window); back.label = T.FontString(back, 'Back')
@@ -30,6 +35,13 @@ export.CloseButton = nil
 
 T.Install('HuntersFieldGuide')
 assert(window.skin.Shell and export.skin.Shell, 'journal or export window not shelled')
+local point, relative, relativePoint, x, y = window.PortraitContainer:GetPoint(1)
+assert(point == 'TOPLEFT' and relative == window and relativePoint == 'TOPLEFT' and x == 8 and y == -8,
+    'portrait container not placed wholly inside the window')
+window.home:GetScript('OnClick')(window.home)
+assert(homeClicks == 1 and window.home:GetScript('OnEnter') == homeEnter
+    and window.home:GetScript('OnLeave') == homeLeave,
+    'portrait home action or tooltip script changed')
 assert(window.CloseButton.skin.CloseButton and not window.CloseButton.skin.Button, 'X boxed instead of a close button')
 local r, g, b = window.header.text:GetTextColor()
 assert(r == 1 and g == 1 and b == 1, 'spellbook ink left unreadable on the dark shell')
@@ -57,4 +69,4 @@ T2.Load('Skins/HuntersFieldGuide.lua')
 local stray = T2.Frame('Frame', nil, 'FieldGuideFrame')
 T2.Install('HuntersFieldGuide')
 assert(not stray.skin.Shell and not T2.Module('HuntersFieldGuide').active, "installed without Hunter's Field Guide")
-print("PASS: Hunter's Field Guide journal and export shells, close button, spellbook ink lifted with its hue (gold kept), header backplate faded, entries, tabs and home left as drawn, slots and menus flat, buttons and search, post-hooks, warm passes, missing addon")
+print("PASS: Hunter's Field Guide shells, contained portrait with home scripts preserved, readable ink, original entries/tabs/home, flat slots, controls, post-hooks, idempotence and gate")

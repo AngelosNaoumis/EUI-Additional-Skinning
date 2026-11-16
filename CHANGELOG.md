@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Removed Additional Skinning's class/accent-coloured 2px top line from every managed window while
+  retaining accent colours on text, selections and functional indicators.
+- Fixed Hunter's Field Guide and GearQuest Forever portraits so their original art and hit targets
+  sit fully inside the top-left corner.
+- Fixed GearQuest's Play style and Track intro washes to cover the full EUI button interior, and
+  aligned its four original right-side page buttons beside the window with consistent spacing.
 - **New skins:** GearQuest Forever (log window, simulate dialog, menus, controls) and Hunter's Field
   Guide (journal, export window, panels, controls), each with its own toggle on the Skins page.
 - **Button style per addon:** each addon's row on the Skins page has its own button style (Default,

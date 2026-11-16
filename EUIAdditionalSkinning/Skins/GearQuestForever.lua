@@ -4,6 +4,77 @@ local function DefineSkin()
 -- Its windows and the panels and menus inside them, by global name.
 local WINDOWS = {GearQuestLogFrame = "window", GearQuestSimulateDialog = "window", GearQuestLanguageMenu = "controls"}
 local METAL_EDGE = "Interface\\Tooltips\\UI-Tooltip-Border"
+local PORTRAIT_X, PORTRAIT_Y = 8, -8
+local NATIVE_PORTRAIT_X, NATIVE_PORTRAIT_Y = -6, 7
+local SIDE_TAB_X, SIDE_TAB_Y = 0, -72
+local SIDE_TAB_WIDTH, SIDE_TAB_HEIGHT, SIDE_TAB_GAP = 53, 53, 8
+local SIDE_TABS = {"tabLog", "tabLookup", "tabSimulator", "tabSettings"}
+local alignedWashes = setmetatable({}, {__mode = "k"})
+local dragHooked = setmetatable({}, {__mode = "k"})
+
+local function Anchor(frame, point, relative, relativePoint, x, y)
+    if not (frame and frame.GetPoint and frame.GetNumPoints and frame.ClearAllPoints and frame.SetPoint) then return end
+    local current, currentRelative, currentRelativePoint, currentX, currentY = frame:GetPoint(1)
+    if frame:GetNumPoints() == 1 and current == point and currentRelative == relative
+        and currentRelativePoint == relativePoint and currentX == x and currentY == y then return end
+    frame:ClearAllPoints()
+    frame:SetPoint(point, relative, relativePoint, x, y)
+end
+
+local function PositionPortrait(frame, guide)
+    if not frame then return end
+    local portrait = frame.PortraitContainer or frame.gqPortraitHolder
+    Anchor(portrait, "TOPLEFT", frame, "TOPLEFT", PORTRAIT_X, PORTRAIT_Y)
+    -- GearQuest's transparent guide button and full-size pulse are separate from the portrait
+    -- container. Move the existing button with the art; its scripts, tooltip and glow stay intact.
+    if guide then Anchor(guide.hit, "TOPLEFT", frame, "TOPLEFT", PORTRAIT_X, PORTRAIT_Y) end
+end
+
+local function PositionGuideBubble(guide, frame)
+    local bubble = guide and guide.bubble
+    if not (bubble and frame and bubble._blX and bubble._blY and UIParent) then return end
+    local frameScale = frame.GetEffectiveScale and frame:GetEffectiveScale() or 1
+    local parentScale = UIParent.GetEffectiveScale and UIParent:GetEffectiveScale() or 1
+    if not frameScale or not parentScale or frameScale <= 0 or parentScale <= 0 then return end
+    local scale = frameScale / parentScale
+    local x = bubble._blX + (PORTRAIT_X - NATIVE_PORTRAIT_X) * scale
+    local y = bubble._blY + (PORTRAIT_Y - NATIVE_PORTRAIT_Y) * scale
+    Anchor(bubble, "BOTTOMLEFT", UIParent, "BOTTOMLEFT", x, y)
+end
+
+local function PositionMainGuideBubble(frame)
+    local gq = _G.GearQuest
+    PositionGuideBubble(gq and gq.PortraitGuide, frame)
+end
+
+local function FillAnimatedButton(button)
+    local wash = button and button.introWash
+    if not wash or alignedWashes[wash] or not wash.ClearAllPoints or not wash.SetPoint then return end
+    alignedWashes[wash] = true
+    wash:ClearAllPoints()
+    -- Two pixels is the button border. The native five-pixel inset was visibly nested inside the
+    -- EUI button fill; this makes the existing animation cover that whole fill without replacing it.
+    wash:SetPoint("TOPLEFT", button, "TOPLEFT", 2, -2)
+    wash:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -2, 2)
+end
+
+local function PositionSideTabs(frame)
+    local rail = frame and frame.sideTabRail
+    if not rail then return end
+    Anchor(rail, "TOPLEFT", frame, "TOPRIGHT", SIDE_TAB_X, SIDE_TAB_Y)
+    if rail.GetWidth and rail.SetSize
+        and (rail:GetWidth() ~= SIDE_TAB_WIDTH
+            or rail:GetHeight() ~= SIDE_TAB_HEIGHT * #SIDE_TABS + SIDE_TAB_GAP * (#SIDE_TABS - 1)) then
+        rail:SetSize(SIDE_TAB_WIDTH, SIDE_TAB_HEIGHT * #SIDE_TABS + SIDE_TAB_GAP * (#SIDE_TABS - 1))
+    end
+    local stride = SIDE_TAB_HEIGHT + SIDE_TAB_GAP
+    for index, key in ipairs(SIDE_TABS) do
+        local button = frame[key]
+        if button then
+            Anchor(button, "TOPLEFT", rail, "TOPLEFT", 0, -(index - 1) * stride)
+        end
+    end
+end
 
 ns.Skin("GearQuestForever", {
     label = "GearQuest Forever",
@@ -17,11 +88,32 @@ ns.Skin("GearQuestForever", {
             C.H.Hook(gq.Log, method, C.refresh)
         end
         if gq.Preview then C.H.Hook(gq.Preview, "EnsureDialog", C.refresh) end
+        if gq.PortraitGuide then
+            local function PlaceGuide(_, frame)
+                PositionGuideBubble(gq.PortraitGuide, frame or gq.Log.frame)
+            end
+            C.H.Hook(gq.PortraitGuide, "Begin", PlaceGuide)
+            C.H.Hook(gq.PortraitGuide, "Open", PlaceGuide)
+        end
     end,
     before = function(C)
+        local gq = _G.GearQuest
         for name, mode in pairs(WINDOWS) do
             local f = _G[name]
-            if f then C.AddRoot(f, mode) end
+            if f then
+                if name == "GearQuestLogFrame" then
+                    PositionPortrait(f, gq and gq.PortraitGuide)
+                    PositionGuideBubble(gq and gq.PortraitGuide, f)
+                    if not dragHooked[f] then
+                        dragHooked[f] = true
+                        C.H.Script(f, "OnDragStop", PositionMainGuideBubble)
+                    end
+                    FillAnimatedButton(f.playStyleBtn)
+                    FillAnimatedButton(f.trackBtn)
+                    PositionSideTabs(f)
+                end
+                C.AddRoot(f, mode)
+            end
         end
         -- The simulate dialog re-applies its own backdrop chrome each time it is opened.
         local dialog = _G.GearQuestSimulateDialog

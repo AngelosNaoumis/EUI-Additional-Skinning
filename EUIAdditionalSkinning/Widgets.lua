@@ -116,7 +116,8 @@ function ns.CreateSkinHelper(S, module)
         -- Some addons store an asset ID in .icon and the Texture in .Icon.
         return H.Texture(f.icon) or H.Texture(f.Icon)
     end
-    -- Themed window shell plus accent bar (options.noAccent: none), once; refresh queued on show.
+    -- Themed window shell, once; refresh queued on show. AttachAccent is a compatibility no-op:
+    -- Additional Skinning windows deliberately have no top-edge accent line.
     function H.Shell(f, refresh, options)
         if not H.Allowed(f) then return end
         if not shells[f] then

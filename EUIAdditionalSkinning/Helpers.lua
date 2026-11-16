@@ -244,7 +244,8 @@ function ns.AddSkinHelpers(H, S)
             for _, t in ipairs(H.Regions(pc)) do if t.GetTexture then H.Fade(t) end end
         end
         H.Fade(original)
-        -- Our unmasked texture never inherits PortraitFrameTemplate's round mask.
+        -- Our unmasked texture never inherits PortraitFrameTemplate's round mask. AttachAccent is
+        -- retained as a compatibility no-op; Additional Skinning windows have no top accent line.
         if not noAccent then ns.AttachAccent(S, f) end
         return entry.icon
     end

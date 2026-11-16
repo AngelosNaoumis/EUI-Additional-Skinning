@@ -148,7 +148,8 @@ Also in `ns`:
 
 - `ns.CreateSoftSkin(S, module, borderless)`: the softer, borderless control variant;
   `borderless(f)` hides the soft edge on chosen controls.
-- `ns.AttachAccent(S, frame)`: EUI's accent bar.
+- `ns.AttachAccent(S, frame)`: compatibility no-op; Additional Skinning windows intentionally do
+  not add a class/accent-coloured line along their top edge.
 - `ns.BindPopupOwner(S, module, owner, options)` / `ns.BindPopupList(...)` (`Menus.lua`): skin the
   dropdown menus a target opens from `owner`. The shared menu hooks install on first use.
 

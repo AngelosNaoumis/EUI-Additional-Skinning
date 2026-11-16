@@ -44,16 +44,16 @@ How to use these in a skin: [SKIN-DEVELOPMENT.md](../SKIN-DEVELOPMENT.md).
 | `H.Font(text, r, g, b)` | Fonts are re-checked on every pass; re-apply only when the EUI font, its flags or the requested colour are not already in place. | `Widgets.lua:95` |
 | `H.Texture(value)` | value when it is a Texture region, else nil. | `Widgets.lua:109` |
 | `H.Icon(f)` | A button's icon Texture (.icon or .Icon), else nil. | `Widgets.lua:115` |
-| `H.Shell(f, refresh, options)` | Themed window shell plus accent bar (options.noAccent: none), once; refresh queued on show. | `Widgets.lua:120` |
-| `H.Tab(f, selected)` | House tab with an explicit selected state (true, false, or nil for native). | `Widgets.lua:143` |
-| `H.Scan(root, refresh, visit, exclude)` | Walk root's tree: auto-style controls by kind, call visit(f, kind), hook refreshes. | `Widgets.lua:150` |
-| `H.Action(f, keep)` | Flat button for backdrop-template buttons, keeping the named regions. | `Widgets.lua:231` |
-| `H.LegacySlider(f, keep)` | Classic Slider scroll bar: thin track, accent thumb, page arrows. | `Widgets.lua:246` |
-| `ns.CreateSoftSkin(S, module, borderless)` | Opt-in treatment for owned addon controls. Keep EUI primitives and their fills/hover states; soften only their newly created pixel-border containers. borderless(f): true for controls whose soft edge (and square-icon edge) stays hidden. | `Widgets.lua:283` |
-| `ns.ButtonStyle(id)` | The style for a skin's buttons (id), or the default (no id). | `Widgets.lua:364` |
-| `ns.SkinButtonSetting(id)` | A skin's own setting: "gamemenu", "window", or "default" (follows the default style). | `Widgets.lua:371` |
-| `ns.StyledFacade(S, id)` | The facade skin id receives, with S.Button drawing that skin's button style afterwards. | `Widgets.lua:430` |
-| `ns.RefreshButtonStyle()` | Re-draws every styled button in the current style (the Skins page's Button style setting). | `Widgets.lua:444` |
+| `H.Shell(f, refresh, options)` | Themed window shell, once; refresh queued on show. AttachAccent is a compatibility no-op: Additional Skinning windows deliberately have no top-edge accent line. | `Widgets.lua:121` |
+| `H.Tab(f, selected)` | House tab with an explicit selected state (true, false, or nil for native). | `Widgets.lua:144` |
+| `H.Scan(root, refresh, visit, exclude)` | Walk root's tree: auto-style controls by kind, call visit(f, kind), hook refreshes. | `Widgets.lua:151` |
+| `H.Action(f, keep)` | Flat button for backdrop-template buttons, keeping the named regions. | `Widgets.lua:232` |
+| `H.LegacySlider(f, keep)` | Classic Slider scroll bar: thin track, accent thumb, page arrows. | `Widgets.lua:247` |
+| `ns.CreateSoftSkin(S, module, borderless)` | Opt-in treatment for owned addon controls. Keep EUI primitives and their fills/hover states; soften only their newly created pixel-border containers. borderless(f): true for controls whose soft edge (and square-icon edge) stays hidden. | `Widgets.lua:284` |
+| `ns.ButtonStyle(id)` | The style for a skin's buttons (id), or the default (no id). | `Widgets.lua:365` |
+| `ns.SkinButtonSetting(id)` | A skin's own setting: "gamemenu", "window", or "default" (follows the default style). | `Widgets.lua:372` |
+| `ns.StyledFacade(S, id)` | The facade skin id receives, with S.Button drawing that skin's button style afterwards. | `Widgets.lua:431` |
+| `ns.RefreshButtonStyle()` | Re-draws every styled button in the current style (the Skins page's Button style setting). | `Widgets.lua:445` |
 
 ## Helpers.lua
 
@@ -76,15 +76,13 @@ How to use these in a skin: [SKIN-DEVELOPMENT.md](../SKIN-DEVELOPMENT.md).
 | `H.Selection(f, selected)` | A flat button with an accent fill while selected (tree rows, list entries). | `Helpers.lua:192` |
 | `H.Toggle(f, expanded)` | An expand/collapse button drawn as a "+" or "-" glyph over its faded art. | `Helpers.lua:205` |
 | `H.Portrait(f, player, noAccent, size)` | A window's round portrait replaced by a square one (player = the player's portrait); returns the icon. size: its side in pixels (default 28), centred in EUI's 25px title strip when it fits. | `Helpers.lua:224` |
-| `H.Resize(f, force)` | A size-grabber's art faded and replaced by a small "+" (force: fade every texture). | `Helpers.lua:252` |
+| `H.Resize(f, force)` | A size-grabber's art faded and replaced by a small "+" (force: fade every texture). | `Helpers.lua:253` |
 
 ## Accent.lua
 
 | Function | What it does | Where |
 | --- | --- | --- |
-| `ns.AccentBarColor(S)` | The public facade exposes the global accent, but not Window Skins' separate accent-bar preference. Read those EUI preferences without modifying its DB. | `Accent.lua:5` |
-| `ns.AccentBarShown()` | EUI's accent-bar setting is on. | `Accent.lua:15` |
-| `ns.AttachAccent(S, frame)` | EUI's accent bar along a window's top edge, recoloured on look changes. | `Accent.lua:22` |
+| `ns.AttachAccent(S, frame)` | Additional Skinning deliberately does not add a top-edge accent to its windows. Keeping the entry point as a no-op lets older skin call sites remain compatible without allocating a texture or a look-change callback. Accent colours elsewhere (text, selections, bars) remain. | `Accent.lua:6` |
 
 ## Dev.lua
 

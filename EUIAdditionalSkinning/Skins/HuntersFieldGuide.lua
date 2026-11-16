@@ -3,6 +3,21 @@ local ADDON, ns = ...
 local function DefineSkin()
 -- Its windows by global name; the target panel and filter menu are backdrop panels, kept small.
 local WINDOWS = {FieldGuideFrame = "window", FieldGuideExport = "window", FieldGuideTargetPanel = "controls"}
+local PORTRAIT_X, PORTRAIT_Y = 8, -8
+
+-- PortraitFrameTemplate seats its PortraitContainer partly outside the top-left corner. The
+-- journal's portrait and its home-button hit target are children/anchors of this container, so
+-- moving the container preserves both the original masked artwork and the click/tooltip region.
+local function PositionPortrait(frame)
+    local portrait = frame and frame.PortraitContainer
+    if not (portrait and portrait.GetPoint and portrait.GetNumPoints
+        and portrait.ClearAllPoints and portrait.SetPoint) then return end
+    local point, relative, relativePoint, x, y = portrait:GetPoint(1)
+    if portrait:GetNumPoints() == 1 and point == "TOPLEFT" and relative == frame
+        and relativePoint == "TOPLEFT" and x == PORTRAIT_X and y == PORTRAIT_Y then return end
+    portrait:ClearAllPoints()
+    portrait:SetPoint("TOPLEFT", frame, "TOPLEFT", PORTRAIT_X, PORTRAIT_Y)
+end
 
 ns.Skin("HuntersFieldGuide", {
     label = "Hunter's Field Guide",
@@ -18,7 +33,10 @@ ns.Skin("HuntersFieldGuide", {
     before = function(C)
         for name, mode in pairs(WINDOWS) do
             local f = _G[name]
-            if f then C.AddRoot(f, mode) end
+            if f then
+                if name == "FieldGuideFrame" then PositionPortrait(f) end
+                C.AddRoot(f, mode)
+            end
         end
     end,
     visit = function(C, f, kind)
