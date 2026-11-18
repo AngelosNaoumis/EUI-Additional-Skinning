@@ -18,8 +18,26 @@ Inside the factory a skin takes one of two shapes:
 OneForAll and Forever Dungeon Journal call `ns.RegisterModule` directly (the lowest level). The
 Naowh Forever integration is not a frame skin at all (ARCHITECTURE.md).
 
-Each skin's EUI toggle and its row on the **Additional Skinning** options page come from its
-catalog entry: nothing to add by hand (`tests/options_spec.lua` checks every TOC skin defines one).
+Each skin's EUI toggle and compact row on the **Additional Skinning** options page come from its
+catalog entry. Set `buttons = true` when the skin owns buttons and should expose the shared button
+style. Add `typography = true` only when changing those button labels is safe; this adds global
+font inheritance, native-font opt-out and automatic-resize controls to its three-dot popup. Optional settings are registered with
+`ns.RegisterSkinSettings(id, sections, options)` rather than a new page.
+
+Custom settings are declarative and use EllesmereUI's cog row types (`toggle`, `slider`,
+`dropdown`, `colorpicker`, `input`, `button`). A simple `key`/`default` row is stored under
+`EUIAdditionalSkinningDB.skinSettings[id]`; a row with `get`/`set` can preserve an existing saved
+location. Use `reload = true` only when reset requires one.
+
+```lua
+ns.RegisterSkinSettings("Foo", {{
+    section = "ADVANCED",
+    settings = {
+        {key = "extra", type = "toggle", label = "Extra Styling", default = true,
+            reload = true},
+    },
+}}, {reload = true})
+```
 
 **Code and notes are kept apart.** The skin file says *what* is done, with one-line comments.
 Each skin's `docs/skins/<Addon>.md` keeps the rest: the frame map, the reasoning behind each
@@ -54,9 +72,9 @@ update it in the same change.
 7. **Check in game.** Test with EUI's window style set to EllesmereUI and to Modern, and once
    with the Classic or Blizzard look. Open every window, tab and popup. Check in and out of
    combat, and after a `/reload` with the window open. Then the switch: in EUI's options,
-   **Additional Skinning**, the skin's row is there under its catalog label, locked while its
-   addon is disabled. Every change offers a reload: off and reloaded, the addon is stock; on again,
-   it is skinned.
+   **Additional Skinning**, the skin's row and three-dot settings are there under its catalog label.
+   The toggle is locked while its addon is disabled, but its settings remain configurable. Off and
+   reloaded, the addon is stock; on again, it is skinned.
 
 ## `ns.Skin(id, spec)`
 
@@ -107,9 +125,10 @@ A window inside another skinned window (a tab panel) is `"controls"`.
   - minimise-art close buttons → `S.CloseButton`.
 - **Square icon buttons:** their icon is squared.
 - **Fonts:** every FontString is re-fonted once.
-- **Text-button fit:** every control passed through the skin facade's `S.Button` keeps its intended
-  font when it fits. An oversized label is made single-line and reduced one pixel at a time to 9px,
-  without changing the button or font colour/alignment/flags. Dynamic `SetText`, `SetWidth`,
+- **Button typography:** every control passed through the skin facade's `S.Button` uses that skin's
+  configured fixed size (8 by default). Optional automatic resizing starts at the configured size,
+  caps it at the original size, and reduces an overflowing single-line label toward the configured
+  minimum (8 by default), without changing button geometry or font face/flags. Dynamic `SetText`, `SetWidth`,
   `SetHeight`, `SetSize`, `SetFont` and `SetFontObject` calls invalidate only that button; unchanged
   measurements are cached. Set `button.euiasAllowMultiline = true` (or the same field on its
   FontString) for an intentionally wrapped label.
@@ -128,7 +147,7 @@ A window inside another skinned window (a tab panel) is `"controls"`.
 | `H.Queue(key, fn)` | Coalesce work into the next frame (`C.refresh` already does this). |
 | `H.Fade(texture)` | Alpha 0, kept at 0 if the target re-shows it. Never `Hide()` someone else's art. |
 | `H.Font(text [, r, g, b])` | EUI font (and colour); a no-op when already applied. |
-| `H.FitButtonText(button [, options])` | Fit a styled button's label without changing geometry. Options: `padding`, `verticalPadding`, `minSize`, `icon`, `iconGap`. Usually automatic through `S.Button`. |
+| `H.FitButtonText(button [, options])` | Set or fit a styled button label without changing geometry. Usually managed automatically from the skin's typography settings. |
 | `H.Texture(v)` / `H.Icon(f)` | A Texture region or nil; an item/spell button's icon texture. |
 | `H.Shell(f, refresh, options)` | Themed window shell without a coloured top accent line; root modes call this. |
 | `H.Tab(tab, selected)` | House tab with an explicit selected state. |
@@ -171,8 +190,8 @@ These are EllesmereUI's public primitives (its `SKINNING_API.md`):
 - **Queries:** `GetAccentColor`, `GetPanelColor`, `GetFont`, `GetStyle`, `OnLooksChanged`.
 
 Prefer them over drawing your own. Every primitive is safe to call again on the same frame.
-`ns.StyledFacade` automatically applies the shared fit policy after `S.Button`; do not call the
-helper manually unless a control needs non-default padding or icon accounting. If a label cannot
+`ns.StyledFacade` automatically applies the shared fixed/fit policy after `S.Button`; do not call
+the helper manually unless a control needs non-default padding or icon accounting. If a label cannot
 fit at the configured minimum, `button.euiasTextFitOverflow` is set for diagnosis and the readable
 minimum is preserved. Icon-only controls and intentional multiline labels are skipped.
 

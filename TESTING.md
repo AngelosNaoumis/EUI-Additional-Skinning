@@ -45,12 +45,17 @@ python -c "import lupa.lua51 as l; r = l.LuaRuntime(); r.execute(\"table.unpack 
 | `tests/skin_spec.lua` | Framework | `ns.Skin`: roots and modes, passes, combat, visibility, events, gates, `ace` |
 | `tests/helpers_spec.lua` | Helpers | Every `Helpers.lua` building block |
 | `tests/widgets_spec.lua` | Scanner | `H.Scan` scroll scoping, discovery, exclusions, fades |
-| `tests/button_text_spec.lua` | Shared buttons | Single-line fitting, readable minimum, icons, dynamic labels and dimensions, intentional multiline labels and idempotence |
+| `tests/button_text_spec.lua` | Shared buttons | Global inheritance, explicit/native modes, reload-stable fitting, original-size cap, dynamic labels/dimensions, combat deferral and idempotence |
+| `tests/settings_spec.lua` | Settings | Declarative registration, defaults, validation, per-skin isolation, legacy compatibility and reset |
+| `tests/deadlybossmods_spec.lua` | Skin spec | Unified both/left/right/no-icon geometry, dividers, pooled reuse, style transitions, native-edge suppression, disabled and protected paths |
+| `tests/battlegroundenemiesfixed_spec.lua` | Skin spec | Native role/raid/castbars, immediate combat-safe icon/highlight updates, operation-level protected deferral, recycling and idempotence |
+| `tests/borders_spec.lua` | Shared borders | Target-addon independence, one-owner lifecycle, isolated colour overrides and normal-colour restoration |
+| `tests/lagbuddy_spec.lua` | Skin spec | Comprehensive main/lazy-dialog styling, combat deferral, stateful controls, stable reopen, metric isolation and disabled path |
 | `tests/core_spec.lua` | Core | TOC order, lazy activation, EUI toggles for enabled targets, GUID enable state, no old-addon guard or import, combat-end pass only after a deferral, `/eas` and `/easnf` only (no legacy commands, one handler each), Debug Mode help |
 | `tests/loader_spec.lua` | Loader | Factories per enabled, loaded target; combat; EUI toggle; failure isolation |
 | `tests/menus_spec.lua` | Menus | Bound popup and dropdown menus, no top accent allocation, restoration, combat |
-| `tests/naowh_spec.lua` | Naowh Forever | Load order, factory wrapping, saved settings honoured, guard, both options pages, copy/manual border, EllesmereUI borders, `/easnf` (status, `edge 2`), bulk actions scoped to Naowh, player-only GCD event |
-| `tests/options_spec.lua` | Options | The EUI plugin page: master, Debug Mode (off by default, no reload) and per-skin toggles, rows locked while their addon is off, reload prompt on every change, `/eas options` |
+| `tests/naowh_spec.lua` | Naowh Forever | Load order, factory wrapping, saved settings, unified cog settings, copy/manual border, EllesmereUI borders, `/easnf`, bulk actions and player-only GCD event |
+| `tests/options_spec.lua` | Options | Compact rows, native cogs, typography/style/component settings, isolation, reload lifecycle and `/eas options` |
 | `tests/dev_spec.lua` | Dev tools | Debug Mode gate (off: no work), `/eas dump`, `probe` (secret-safe) and `perf` |
 | `tests/limits_spec.lua` | Headroom | Every skin handler at or under 50 upvalues |
 | `tests/auctionator_*_spec.lua` | Skin specs | Auctionator; they keep their own fakes |
@@ -178,8 +183,10 @@ print('PASS: Foo window, buttons, pooled rows, warm passes')
 - **Benchmarks:**
   - `benchmarks/<name>.lua` builds a synthetic workload and prints one `MEASURE` line.
   - `python scripts/benchmark.py <name> --before <older copy>` compares medians.
-  - `button_text` covers warm label fitting and dynamic labels; `menus` covers closed bound menus
-    and custom pools; `scan` and `auctionator` cover the shared walker and largest integration.
+  - `bge_combat` measures existing combat-time target/focus, trinket visibility, and recycled-row paths; border/divider creation and queued work must remain zero.
+  - `button_text` covers warm fitting, changing labels and repeated unchanged labels; `menus`
+    covers closed bound menus and custom pools; `scan` and `auctionator` cover the shared walker
+    and largest integration.
   - Use it for any change to per-pass code.
   - In game: Debug Mode on, then `/eas perf`.
 - **CI:** `.github/workflows/checks.yml` runs the same `tests/run.py` on Lua 5.1 and 5.4, then

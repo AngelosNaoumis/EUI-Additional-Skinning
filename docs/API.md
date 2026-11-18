@@ -8,19 +8,39 @@ How to use these in a skin: [SKIN-DEVELOPMENT.md](../SKIN-DEVELOPMENT.md).
 | Function | What it does | Where |
 | --- | --- | --- |
 | `ns.Print(message)` | - | `Core.lua:10` |
-| `ns.DB()` | The saved settings table: disabled (master switch), skins[id] = false (switched off here), euiWindows/euiBags (EllesmereUI borders), debug (Debug Mode), buttonStyle ("gamemenu"; nil = EllesmereUI windows) and buttonStyles[id] (per skin; nil = that default), naowh (the Naowh Forever integration's settings), dumps (Dev.lua). | `Core.lua:18` |
-| `ns.AddOnLoaded(name)` | An addon folder is loaded in this session. | `Core.lua:26` |
-| `ns.EllesmereOption(key)` | The EllesmereUI window and bag borders (Skins page): "euiWindows" or "euiBags", on unless switched off. | `Core.lua:31` |
-| `ns.DebugMode()` | Debug Mode (Skins page): the dev commands (/eas dump, probe, perf) work only while it is on. Off by default. | `Core.lua:37` |
-| `ns.IsSwitchedOn(id)` | True unless the integration was switched off on this addon's options page. | `Core.lua:43` |
-| `ns.IsEnabled(module)` | Skinning on overall (no module), or for one module: switched on here and in EUI. | `Core.lua:49` |
-| `ns.TargetEnabled(entry)` | One of the entry's target addons is enabled for this character (it loads, or will load). | `Core.lua:63` |
-| `ns.TargetLoaded(entry)` | One of the entry's target addons is loaded in this session. | `Core.lua:89` |
-| `ns.LoadSkin(entry)` | Run the entry's skin factory once every condition holds; it then registers its module. | `Core.lua:101` |
-| `ns.RegisterSkinDefinition(id, factory)` | A skin file hands over its factory; it runs once its target is loaded (ns.LoadSkin). | `Core.lua:119` |
-| `ns.RegisterModule(id, label, available, install)` | A skin's factory calls this. available() says the target's frames exist; install runs once, with the S facade EUI handed over for its catalog entry. | `Core.lua:161` |
-| `ns.Apply()` | Install skins that can install now and refresh the active ones. Switching one on applies here; switching one off needs a reload, since a skin's hooks stay until then. | `Core.lua:173` |
-| `ns.Status(entry)` |  Status and commands  One phrase for a catalog entry's state, as /eas and the options page show it. | `Core.lua:207` |
+| `ns.DB()` | - | `Core.lua:49` |
+| `ns.AddOnLoaded(name)` | An addon folder is loaded in this session. | `Core.lua:58` |
+| `ns.EllesmereOption(key)` | The EllesmereUI window and bag borders (Skins page): "euiWindows" or "euiBags", on unless switched off. | `Core.lua:63` |
+| `ns.DebugMode()` | Debug Mode (Skins page): the dev commands (/eas dump, probe, perf) work only while it is on. Off by default. | `Core.lua:69` |
+| `ns.IsSwitchedOn(id)` | True unless the integration was switched off on this addon's options page. | `Core.lua:75` |
+| `ns.SkinFeature(id, key)` | Optional parts of a skin are on unless explicitly disabled. Keeping only false values makes older saved-variable tables inherit new components without a migration. | `Core.lua:82` |
+| `ns.IsEnabled(module)` | Skinning on overall (no module), or for one module: switched on here and in EUI. | `Core.lua:89` |
+| `ns.TargetEnabled(entry)` | One of the entry's target addons is enabled for this character (it loads, or will load). | `Core.lua:103` |
+| `ns.TargetLoaded(entry)` | One of the entry's target addons is loaded in this session. | `Core.lua:129` |
+| `ns.LoadSkin(entry)` | Run the entry's skin factory once every condition holds; it then registers its module. | `Core.lua:141` |
+| `ns.RegisterSkinDefinition(id, factory)` | A skin file hands over its factory; it runs once its target is loaded (ns.LoadSkin). | `Core.lua:159` |
+| `ns.RegisterModule(id, label, available, install)` | A skin's factory calls this. available() says the target's frames exist; install runs once, with the S facade EUI handed over for its catalog entry. | `Core.lua:201` |
+| `ns.Apply()` | Install skins that can install now and refresh the active ones. Switching one on applies here; switching one off needs a reload, since a skin's hooks stay until then. | `Core.lua:213` |
+| `ns.Status(entry)` |  Status and commands  One phrase for a catalog entry's state, as /eas and the options page show it. | `Core.lua:258` |
+
+## Settings.lua
+
+| Function | What it does | Where |
+| --- | --- | --- |
+| `ns.SupportsButtonTypography(id)` | - | `Settings.lua:29` |
+| `ns.RegisterSkinSettings(id, sections, options)` | Register sections for a skin's three-dot popup. A section is {title = "TYPOGRAPHY", settings = {...}}; rows may use the native EllesmereUI cog types. | `Settings.lua:36` |
+| `ns.SkinSetting(id, key, default)` | A simple registered setting's saved value, or its default. Custom rows may keep their existing SavedVariables by supplying get/set functions instead. | `Settings.lua:45` |
+| `ns.SetSkinSetting(id, key, value, default)` | Save only values that differ from the default, so new defaults and old SavedVariables remain independent per skin and empty tables disappear. | `Settings.lua:54` |
+| `ns.DefaultButtonFontSize()` | Global default plus the per-skin inheritance choice. An absent per-skin value means Default; existing numeric values remain explicit overrides, including a deliberately selected 8. | `Settings.lua:66` |
+| `ns.SetDefaultButtonFontSize(value)` | - | `Settings.lua:70` |
+| `ns.ButtonFontSelection(id)` | - | `Settings.lua:75` |
+| `ns.SetButtonFontSelection(id, value)` | - | `Settings.lua:83` |
+| `ns.ResolveButtonFontSize(id, originalSize)` | - | `Settings.lua:90` |
+| `ns.ConfiguredAutoResizeButtonText(id)` | - | `Settings.lua:110` |
+| `ns.AutoResizeButtonText(id)` | - | `Settings.lua:114` |
+| `ns.ButtonFontSelectionLocked(id)` | - | `Settings.lua:122` |
+| `ns.MinimumAutoFontSize(id)` | - | `Settings.lua:126` |
+| `ns.ResetSkinSettings(id)` | Clear only this skin's options. Legacy button-style/component tables are retained in their old locations for compatibility, but participate in the same reset action. | `Settings.lua:132` |
 
 ## Skin.lua
 
@@ -51,11 +71,15 @@ How to use these in a skin: [SKIN-DEVELOPMENT.md](../SKIN-DEVELOPMENT.md).
 | `H.Action(f, keep)` | Flat button for backdrop-template buttons, keeping the named regions. | `Widgets.lua:236` |
 | `H.LegacySlider(f, keep)` | Classic Slider scroll bar: thin track, accent thumb, page arrows. | `Widgets.lua:251` |
 | `ns.CreateSoftSkin(S, module, borderless)` | Opt-in treatment for owned addon controls. Keep EUI primitives and their fills/hover states; soften only their newly created pixel-border containers. borderless(f): true for controls whose soft edge (and square-icon edge) stays hidden. | `Widgets.lua:288` |
-| `ns.FitButtonText(button, options)` | Shrink an oversized styled button label to fit its current width and height. Options: padding (horizontal, default 8), verticalPadding (default 2), minSize (default 9), icon and iconGap. | `Widgets.lua:494` |
-| `ns.ButtonStyle(id)` | The style for a skin's buttons (id), or the default (no id). | `Widgets.lua:548` |
-| `ns.SkinButtonSetting(id)` | A skin's own setting: "gamemenu", "window", or "default" (follows the default style). | `Widgets.lua:555` |
-| `ns.StyledFacade(S, id)` | The facade skin id receives, with S.Button drawing that skin's button style afterwards. | `Widgets.lua:614` |
-| `ns.RefreshButtonStyle()` | Re-draws every styled button in the current style (the Skins page's Button style setting). | `Widgets.lua:634` |
+| `ns.FitButtonText(button, options)` | Set or fit a styled button label without changing its geometry. Options: padding (horizontal, default 8), verticalPadding (default 2), minSize (default 8), icon, iconGap, basePath, baseSize, baseFlags and enabled (false applies baseSize without measuring). | `Widgets.lua:497` |
+| `ns.ButtonStyle(id)` | The style for a skin's buttons (id), or the default (no id). | `Widgets.lua:569` |
+| `ns.SkinButtonSetting(id)` | A skin's own setting: "gamemenu", "window", or "default" (follows the default style). | `Widgets.lua:576` |
+| `ns.ApplyButtonTypography(btn, id)` | Apply one skin's fixed/automatic button type setting. Automatic mode never grows past the target's original size; fixed mode may do so only when the user explicitly chooses it. | `Widgets.lua:606` |
+| `ns.RefreshInheritedButtonTypography()` | A global default change touches only buttons that actually inherit it. Explicit sizes and the native-font mode do no work and retain their current fonts. | `Widgets.lua:666` |
+| `ns.RefreshButtonTypography(id)` | Repaint only the already-owned buttons of one skin (or all skins) after a typography change. | `Widgets.lua:676` |
+| `ns.FlushButtonTypography()` | Apply only protected button-font updates that were skipped in combat. Core calls this on the existing PLAYER_REGEN_ENABLED event, so no typography-specific event frame or polling exists. | `Widgets.lua:685` |
+| `ns.StyledFacade(S, id)` | The facade skin id receives, with S.Button drawing that skin's button style afterwards. | `Widgets.lua:741` |
+| `ns.RefreshButtonStyle(id)` | Re-draws every styled button in the current style (the Skins page's Button style setting). | `Widgets.lua:771` |
 
 ## Helpers.lua
 

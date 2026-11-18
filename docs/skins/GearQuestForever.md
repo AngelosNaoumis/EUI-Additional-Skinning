@@ -63,9 +63,10 @@ Built from GearQuest Forever 1.2.0's source (installed copy). **Not yet checked 
   pixels and the exposed `UIParent`-parented portion remains clickable. The skin does not hook
   `SetPageTab`; if GearQuest genuinely replaces a tab, the next normal refresh treats that new
   object once.
-- **Button labels:** the shared styled-button policy keeps the intended size when it fits and
-  progressively shrinks oversized labels, including Play style, to a 9px minimum. It changes no
-  button geometry, alignment, colour, outline, click script or intro animation.
+- **Button labels:** the shared per-skin policy uses the configured fixed size (8 by default).
+  Optional automatic fitting shrinks oversized labels, including Play style, only as needed toward
+  the configured minimum (8 by default). It changes no button geometry, alignment, colour,
+  outline, click script or intro animation.
 
 ## Performance
 
@@ -82,7 +83,7 @@ Per frame, the text check compares before writing; panels and menus are handled 
 - The tracker, toasts, portrait guide and character-sheet popup are HUD or overlay pieces and keep
   GearQuest's look.
 - Dropdowns built from `UIDropDownMenuTemplate` in the simulate dialog keep Blizzard's art.
-- A label that still cannot fit at the readable 9px minimum is left at 9px and marked
+- A label that still cannot fit at the configured minimum is left there and marked
   `euiasTextFitOverflow` for in-game diagnosis; it is not made smaller or given a wider button.
 
 ## History

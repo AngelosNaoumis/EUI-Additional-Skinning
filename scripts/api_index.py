@@ -12,7 +12,7 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 addon = root / 'EUIAdditionalSkinning'
 OUT = root / 'docs' / 'API.md'
-SOURCES = ['Core.lua', 'Skin.lua', 'Widgets.lua', 'Helpers.lua', 'Accent.lua', 'Dev.lua']
+SOURCES = ['Core.lua', 'Settings.lua', 'Skin.lua', 'Widgets.lua', 'Helpers.lua', 'Accent.lua', 'Dev.lua']
 DEF = re.compile(r'^\s*function\s+((?:ns|H)\.[A-Za-z_]+)\s*\(([^)]*)\)')
 
 

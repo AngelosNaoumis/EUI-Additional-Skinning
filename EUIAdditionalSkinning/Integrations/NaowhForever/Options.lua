@@ -1,25 +1,17 @@
 local ADDON, A = ...
--- "Naowh Forever Additional Settings" in EUI's options: Naowh Forever's look and components. The
--- Borders and Manual Border sections are built here but shown on the Skins page (A.BorderSections):
--- the border style is also what the EllesmereUI window and bag borders draw. Every change is saved
--- at once and applies after /reload.
+-- Naowh Forever's declarative three-dot settings. The border style is also what the EllesmereUI
+-- window and bag borders draw. Every change is saved at once and applies after /reload.
 local NS = A.Naowh
 local Config = NS.Config
 
 local function DB() return Config:Get() end
 local function M() return Config:Manual() end
 local function Changed(what) A.SettingChanged(true, what) end
-local function Locked()
-    if not A.IsEnabled() then return "Turn on Enable Skinning." end
-    if not A.IsSwitchedOn("NaowhForever") then return "Turn on Naowh Forever on the Skins page." end
-end
-local function Disabled() return Locked() ~= nil end
--- The border style (copy or manual) is shared with the EllesmereUI window and bag borders, which
--- work without Naowh Forever: it locks only while skinning is off.
-local function StyleLocked()
-    if not A.IsEnabled() then return "Turn on Enable Skinning." end
-end
-local function StyleDisabled() return StyleLocked() ~= nil end
+-- A disabled or absent target remains configurable through its cog.
+local function Locked() end
+local function Disabled() return false end
+local function StyleLocked() end
+local function StyleDisabled() return false end
 local function CopyOn() return DB().edgeMode == "actionbars" end
 -- Manual border controls: available only while Main Action Bar 1's border is not copied.
 local function ManualLocked()
@@ -160,8 +152,7 @@ local function CopyRow()
     row.disabled, row.disabledTooltip = StyleDisabled, StyleLocked
     return row
 end
--- Shown on the Skins page (Options.lua), after its EllesmereUI section.
-A.BorderSections = {
+local BORDER_SECTIONS = {
     {"BORDERS", {
         Toggle("Enable custom borders", "useEdges", "EllesmereUI-style borders on Naowh Forever's elements."),
         CopyRow(),
@@ -190,32 +181,8 @@ local SECTIONS = {
     {"ALL SETTINGS", {
         Button("Enable All", function() Config:SetAll(true); Changed("these changes") end),
         Button("Disable All", function() Config:SetAll(false); A.SettingChanged(false, "these changes") end),
-        Button("Reset to Defaults", function() Config:Reset(); Changed("the defaults") end),
     }},
 }
 
--- Sections as headers and paired rows, from y; returns the new y. Shared with the Skins page.
--- Also run by EUI's search pre-build with a stub factory: it only builds rows.
-function A.BuildSections(sections, parent, y)
-    local W = _G.EllesmereUI.Widgets
-    local _, h
-    for index, section in ipairs(sections) do
-        if index > 1 then _, h = W:Spacer(parent, y, 10); y = y - h end
-        _, h = W:SectionHeader(parent, section[1], y); y = y - h
-        local rows = section[2]
-        if type(rows) == "function" then rows = rows() end
-        for i = 1, #rows, 2 do
-            _, h = W:DualRow(parent, y, rows[i], rows[i + 1] or {type = "label", text = ""}); y = y - h
-        end
-    end
-    return y
-end
-
-local function Build(_, parent, y)
-    return math.abs(A.BuildSections(SECTIONS, parent, y))
-end
-
-A.OptionPages = A.OptionPages or {}
-A.OptionPages[#A.OptionPages + 1] = {key = "NaowhForever", title = "Naowh Forever Additional Settings",
-    description = "Only what changes Naowh Forever: colors, font, window shells and which elements get borders (the border settings are on the Skins page). Changes apply after a reload. /easnf debug for status.",
-    pages = {"Naowh Forever"}, buildPage = Build}
+for _, section in ipairs(BORDER_SECTIONS) do SECTIONS[#SECTIONS + 1] = section end
+A.RegisterSkinSettings("NaowhForever", SECTIONS, {reload = true, reset = function() Config:Reset() end})

@@ -1,5 +1,43 @@
 # Changelog
 
+## 2.3.0 - 2026-11-18
+
+- Replaced expanded per-skin controls with one enable toggle and EllesmereUI's native three-dot
+  settings popup per catalog entry. Popups are generated from a shared declarative registry and
+  remain configurable while their skin or target addon is disabled.
+- Added global **Default Button Font Size** (8) with per-skin **Default**, **Addon's Font Size**, and
+  explicit 4-32 choices. Optional automatic resizing is reload-gated, disables the fixed selector,
+  and never enlarges beyond the addon's original size. Naowh Forever retains native typography.
+- Consolidated every Naowh Forever appearance, component, border, manual-border and bulk setting
+  into its three-dot popup and removed the duplicate standalone settings page. Existing
+  `naowh`, `buttonStyles` and `skinFeatures` SavedVariables remain compatible.
+- Added event-driven skins for DBM timers and LagBuddy's analyzer/settings/results windows. Each
+  has an independent master toggle; DBM's unified timer
+  border and icon/bar dividers can also be switched independently.
+- Reused the configured Additional Skinning border engine for one cached DBM layout hull around
+  the bar and all visible icons, with castbar-style dividers, native-edge suppression,
+  secret/protected-frame guards, and no timer-update hooks.
+- Added lifecycle and reuse regressions plus source-specific documentation. No polling, recurring
+  timer, global frame-creation hook, metric-update hook, or interaction-time tree scan was introduced.
+- Fixed DBM normal/huge style transitions so a native border created lazily by the pooled bar is
+  suppressed immediately through the shared bar-style lifecycle, without rescanning active timers.
+- Repeated assignments of unchanged styled-button text now reuse the cached fit result instead of
+  measuring the label again.
+- Corrected the source-verified BattlegroundEnemiesFixed integration: role, raid-target and castbar
+  visuals stay native; trinket/objective/respawn borders follow actual icon visibility; target and
+  focus recolour the existing outer border with target precedence. No polling or protected-frame
+  geometry writes were added.
+- Moved standalone configured-border ownership and recolouring into shared infrastructure, removing
+  BGE's runtime dependency on Naowh Forever state and avoiding Naowh SavedVariables when it is absent.
+- Made Auto Resize OFF bypass the fitting engine completely: fixed/native modes install no resize
+  hooks, allocate no fit state, and perform zero automatic measurements or automatic font writes.
+  Added regressions for dynamic text, dimensions, visibility, reapplication and the disabled hot path.
+- Applied BGE's existing and unprotected visual updates immediately in combat. Only decoration that
+  must attach to an actually protected frame is queued by operation for the existing combat-end
+  event; no full BGE refresh is deferred. Stale pooled trinket/objective hosts are still retired.
+- Removed the temporary allocation from every BGE icon-visibility update and added an offline combat
+  benchmark covering 10,000 target/focus, trinket, and recycled-row update cycles.
+
 ## 2.2.0 - 2026-11-16
 
 - Reduced idle and warm-path skinning overhead: button label fitting now allocates nothing material

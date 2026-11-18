@@ -1,5 +1,5 @@
 local ADDON, ns = ...
-ns.VERSION = "2.2.0"
+ns.VERSION = "2.3.0"
 ns.TITLE = "EUI Additional Skinning"
 ns.modules = {}
 
@@ -13,11 +13,43 @@ end
 local Print = ns.Print
 
 -- The saved settings table: disabled (master switch), skins[id] = false (switched off here),
--- euiWindows/euiBags (EllesmereUI borders), debug (Debug Mode), buttonStyle ("gamemenu"; nil = EllesmereUI windows) and buttonStyles[id] (per skin; nil = that default), naowh (the Naowh Forever
--- integration's settings), dumps (Dev.lua).
+-- euiWindows/euiBags (EllesmereUI borders), debug (Debug Mode), buttonStyle ("gamemenu"; nil = EllesmereUI windows), buttonStyles[id] (per skin; nil = that default), skinSettings[id]
+-- (declarative per-skin values), naowh (the Naowh Forever integration's settings),
+-- skinFeatures[id][key] = false (optional skin component off),
+-- dumps (Dev.lua).
+local cleanedSavedVariables
+local function RemoveSkinKey(db, tableKey, id)
+    local values = db[tableKey]
+    if type(values) ~= "table" then return end
+    values[id] = nil
+    if next(values) == nil then db[tableKey] = nil end
+end
+
+local function CleanSavedVariables(db)
+    if cleanedSavedVariables then return end
+    cleanedSavedVariables = true
+    -- LayerSwap is no longer an integration. Remove only its owned entries, leaving every other
+    -- skin preference intact. The BGE castbar component likewise disappeared when castbars became
+    -- deliberately native again.
+    for _, tableKey in ipairs({"skins", "buttonStyles", "skinFeatures", "skinSettings"}) do
+        RemoveSkinKey(db, tableKey, "LayerSwap")
+    end
+    local features = type(db.skinFeatures) == "table" and db.skinFeatures.BattlegroundEnemiesFixed
+    if type(features) == "table" then
+        features.castbars = nil
+        if next(features) == nil then RemoveSkinKey(db, "skinFeatures", "BattlegroundEnemiesFixed") end
+    end
+    local naowh = type(db.skinSettings) == "table" and db.skinSettings.NaowhForever
+    if type(naowh) == "table" then
+        naowh.buttonFontSize, naowh.autoResizeButtonText, naowh.minimumAutoFontSize = nil, nil, nil
+        if next(naowh) == nil then RemoveSkinKey(db, "skinSettings", "NaowhForever") end
+    end
+end
+
 function ns.DB()
     local db = EUIAdditionalSkinningDB
     if type(db) ~= "table" then db = {}; EUIAdditionalSkinningDB = db end
+    CleanSavedVariables(db)
     return db
 end
 
@@ -43,6 +75,14 @@ end
 function ns.IsSwitchedOn(id)
     local skins = EUIAdditionalSkinningDB and EUIAdditionalSkinningDB.skins
     return not (skins and skins[id] == false)
+end
+
+-- Optional parts of a skin are on unless explicitly disabled. Keeping only false values makes
+-- older saved-variable tables inherit new components without a migration.
+function ns.SkinFeature(id, key)
+    local features = EUIAdditionalSkinningDB and EUIAdditionalSkinningDB.skinFeatures
+    local skin = features and features[id]
+    return not (skin and skin[key] == false)
 end
 
 -- Skinning on overall (no module), or for one module: switched on here and in EUI.
@@ -185,7 +225,18 @@ events:RegisterEvent("PLAYER_LOGIN")
 -- A skin deferred by combat activates when it ends.
 events:RegisterEvent("PLAYER_REGEN_ENABLED")
 events:SetScript("OnEvent", function(_, event)
-    if event == "PLAYER_REGEN_ENABLED" and next(deferred) == nil then return end
+    if event == "PLAYER_REGEN_ENABLED" then
+        if ns.FlushButtonTypography then ns.FlushButtonTypography() end
+        for _, module in ipairs(ns.modules) do
+            if module.combatDeferred and module.refresh and ns.IsEnabled(module) then
+                module.combatDeferred = nil
+                local callback = module.flushCombatDeferred or module.refresh
+                local ok, err = pcall(callback)
+                if not ok then geterrorhandler()(ADDON .. " / " .. module.label .. ": " .. tostring(err)) end
+            end
+        end
+        if next(deferred) == nil then return end
+    end
     ns.DB()
     if event == "PLAYER_LOGIN" then
         if not (_G.EllesmereUI and _G.EllesmereUI.RegisterSkin) then

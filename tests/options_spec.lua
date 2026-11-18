@@ -1,4 +1,5 @@
--- Options: EUI plugin section, Debug Mode toggle, Button style (default and per skin, Game Menu or window, live), one row per catalog entry (each TOC skin defines one), rows locked while their addon is not enabled, a debounced reload prompt on every change, switch-on applied at once, /eas options.
+-- Options: compact skin rows with native EUI cogs, declarative popup settings, live typography/style,
+-- persistence, reload-gated components, target switches and /eas options.
 local T = dofile('tests/support.lua')
 local plugin, popups, opened, refreshes = nil, {}, nil, 0
 EllesmereUI.RegisterPlugin = function(id, spec) plugin = {id = id, spec = spec}; return true end
@@ -6,13 +7,22 @@ EllesmereUI.OpenPlugin = function(id) opened = id; return true end
 EllesmereUI.ShowConfirmPopup = function(_, opts) popups[#popups + 1] = opts end
 EllesmereUI.RefreshPage = function() refreshes = refreshes + 1 end
 -- Records each row's configs, as EUI's widget factory would build them.
-local rows = {}
-local function Record(_, _, _, left, right) rows[#rows + 1] = {left, right}; return nil, 40 end
+local rows, cogs = {}, {}
+local function Record(_, _, _, left, right)
+    local row = {_leftRegion = {}}
+    rows[#rows + 1] = {left, right, frame = row}
+    return row, 40
+end
 EllesmereUI.Widgets = {
     SectionHeader = function(_, _, text) rows[#rows + 1] = {header = text}; return nil, 30 end,
     Spacer = function(_, _, _, height) return nil, height end,
     DualRow = Record, Slider = function() return nil, 40 end,
 }
+EllesmereUI.BuildInlineCog = function(region, opts)
+    cogs[#cogs + 1] = opts
+    region.cog = opts
+    return {opts = opts}
+end
 -- Every skin the TOC lists, so the row check below covers future skins too.
 local skins = {}
 for line in io.open(T.TOC):read('*a'):gmatch('[^\r\n]+') do
@@ -31,6 +41,16 @@ local byText = {}
 for _, row in ipairs(rows) do
     for _, cfg in ipairs(row) do if type(cfg) == 'table' and cfg.text then byText[cfg.text] = cfg end end
 end
+local function CogRows(id)
+    local wanted = ns.skinCatalogByID[id].label .. ' Settings'
+    local result, found = {}, nil
+    for _, cog in ipairs(cogs) do if cog.title == wanted then found = cog end end
+    assert(found, 'no three-dot settings popup for ' .. id)
+    for _, section in ipairs(found.sections or {}) do
+        for _, row in ipairs(section.rows or {}) do if row.label then result[row.label] = row end end
+    end
+    return result, found
+end
 local master, skin = byText['Enable Skinning'], byText['Auctionator']
 assert(master and skin, 'master and Auctionator toggles built')
 -- Debug Mode: on the Skins page, off by default, saved at once without a reload prompt; off stops perf timing.
@@ -48,6 +68,9 @@ assert(EUIAdditionalSkinningDB.debug == nil and not ns.profiling and #popups == 
 -- EllesmereUI's configured border (the Game Menu's calls); the window fill and border are hidden.
 -- The dropdown switches live, both ways, without a reload.
 local styleRow = assert(byText['Default button style'], 'no Default button style setting on the Skins page')
+local globalFontRow = assert(byText['Default Button Font Size'], 'no global default button font size')
+assert(globalFontRow.getValue() == 8 and globalFontRow.min == 4 and globalFontRow.max == 32,
+    'global font default or range is wrong')
 assert(styleRow.getValue() == 'window', 'Button style not EllesmereUI windows by default')
 local borders, ffd = {}, {}
 EllesmereUI._applyBlizzardConfiguredBorder = function(owner, prefix, legacy) borders[#borders + 1] = {owner, prefix, legacy} end
@@ -82,7 +105,8 @@ styleRow.setValue('gamemenu'); T.Flush()
 assert(EUIAdditionalSkinningDB.buttonStyle == 'gamemenu' and inset.shown and ffd[btn].bg.alpha == 0 and btn.ppHidden == true
     and ffd[btn].hover.all == inset and #btn.children == 1, 'switching back to the Game Menu style is not live')
 -- Without EllesmereUI's configured-border call, buttons keep the window style untouched.
--- Each frame skin's button style sits on its toggle's row; the default above the SKINS header.
+-- The main page contains only one toggle and one native three-dot control per skin; the global
+-- default remains above the SKINS header.
 local headerAt, defaultAt = {}, nil
 for i, row in ipairs(rows) do
     if row.header then headerAt[row.header] = i end
@@ -90,32 +114,36 @@ for i, row in ipairs(rows) do
 end
 assert(defaultAt and defaultAt < headerAt.SKINS, 'Default button style not above the skin rows')
 for _, entry in ipairs(ns.skinCatalog) do
-    local paired
+    local mainRow
     for _, row in ipairs(rows) do
-        if row[1] and row[1].text == entry.label then paired = row[2] and row[2].text end
+        if row[1] and row[1].text == entry.label then mainRow = row end
     end
-    if entry.integration then assert(paired == '', entry.label .. ' got a button style')
-    else assert(paired == entry.label .. ' buttons', entry.label .. "'s button style is not beside its toggle") end
+    assert(mainRow and mainRow[2] == nil and mainRow.frame._leftRegion.cog,
+        entry.label .. ' main row contains inline settings or has no cog')
 end
--- Per skin: one row per frame skin (none for Naowh Forever), "Default" until set; a skin's own
--- choice wins over the default, live; "Default" again clears it.
+assert(#cogs == #ns.skinCatalog, 'a skin created no cog or duplicate cogs')
+-- Per button-bearing frame skin: "Default" until set; a skin's own choice wins over the default,
+-- live; "Default" again clears it. Naowh has neither generic typography nor button style.
 for _, entry in ipairs(ns.skinCatalog) do
-    local row = byText[entry.label .. ' buttons']
-    if entry.integration then assert(not row, entry.label .. ' has a button style row')
-    else assert(row and row.getValue() == 'default', entry.label .. ' has no button style row set to Default') end
+    local popup = CogRows(entry.id)
+    local row = popup['Button Style']
+    if entry.buttons and not entry.integration then
+        assert(row and row.get() == 'default', entry.label .. ' has no popup button style set to Default')
+    else assert(not row, entry.label .. ' exposes a meaningless button style') end
 end
-local altoRow = byText['Altoholic buttons']
-assert(altoRow.disabled() and altoRow.disabledTooltip():find('not enabled', 1, true), 'a skin row open while its addon is off')
+local altoPopup = CogRows('Altoholic')
+local altoRow = altoPopup['Button Style']
+assert(not altoRow.disabled, 'popup settings are locked while the target is absent')
 local alto = T.Frame('Button', T.Frame('Frame')); ffd[alto] = {bg = T.Texture(alto, 'BACKGROUND')}
 ns.StyledFacade(T.S, 'Altoholic').Button(alto)
 assert(alto.children[1] and alto.children[1].shown, 'Altoholic button not in the default (Game Menu) style')
-altoRow.setValue('window'); T.Flush()
-assert(EUIAdditionalSkinningDB.buttonStyles.Altoholic == 'window' and altoRow.getValue() == 'window', 'per-skin choice not saved')
+altoRow.set('window'); T.Flush()
+assert(EUIAdditionalSkinningDB.buttonStyles.Altoholic == 'window' and altoRow.get() == 'window', 'per-skin choice not saved')
 assert(not alto.children[1].shown and ffd[alto].bg.alpha == 1, 'per-skin choice not applied live')
 assert(inset.shown and ffd[btn].bg.alpha == 0, 'one skin\'s choice changed another skin\'s buttons')
 styleRow.setValue('window'); styleRow.setValue('gamemenu'); T.Flush()
 assert(not alto.children[1].shown, 'the default overrode a skin\'s own choice')
-altoRow.setValue('default'); T.Flush()
+altoRow.set('default'); T.Flush()
 assert(EUIAdditionalSkinningDB.buttonStyles == nil and alto.children[1].shown, '"Default" did not hand the skin back to the default')
 EllesmereUI._applyBlizzardConfiguredBorder = nil
 local plain = T.Frame('Button', T.Frame('Frame')); ffd[plain] = {bg = T.Texture(plain, 'BACKGROUND')}
@@ -172,6 +200,77 @@ T.loaded.OtherSkins = true
 assert(not skin.disabled() and not master.disabled and ns.IsEnabled(), 'a row locked beside another skinning addon')
 T.loaded.OtherSkins = nil
 
+-- Optional components live only in their popup, default on, persist only explicit false, and stay
+-- configurable before the target is loaded.
+local dbmPopup = CogRows('DeadlyBossMods')
+local dbmBars = assert(dbmPopup['Unified timer border'], 'DBM unified-border option missing')
+local dbmIcons = assert(dbmPopup['Icon/bar dividers'], 'DBM divider option missing')
+assert(dbmBars.get(), 'DBM timer-bar feature not on by default')
+assert(dbmIcons.get(), 'DBM timer-icon feature not on by default')
+assert(not dbmBars.disabled, 'DBM feature locked while its target is absent')
+T.loaded['DBM-StatusBarTimers'] = true
+local featurePopups, featureRefreshes = #popups, refreshes
+dbmIcons.set(false); T.Flush()
+assert(not ns.SkinFeature('DeadlyBossMods', 'icons')
+    and EUIAdditionalSkinningDB.skinFeatures.DeadlyBossMods.icons == false,
+    'DBM divider switch was not persisted')
+dbmIcons.set(true); T.Flush()
+assert(ns.SkinFeature('DeadlyBossMods', 'icons') and EUIAdditionalSkinningDB.skinFeatures == nil,
+    'DBM divider default did not clear the saved override')
+assert(#popups == featurePopups + 2 and refreshes == featureRefreshes + 2,
+    'DBM feature changes did not use the standard reload/refresh lifecycle')
+
+local bgeRows = CogRows('BattlegroundEnemiesFixed')
+local bgeFeatures = {
+    assert(bgeRows['Unit-frame borders'], 'BGE unit-frame option missing'),
+    assert(bgeRows['Health/Power dividers'], 'BGE Health/Power option missing'),
+    assert(bgeRows['Buff/debuff borders'], 'BGE aura option missing'),
+    (assert(bgeRows['Additional icon borders'], 'BGE icon option missing')),
+}
+assert(not bgeRows['Castbar borders'], 'BGE still exposes obsolete castbar skinning')
+for _, option in ipairs(bgeFeatures) do
+    assert(option.get() and not option.disabled, 'BGE feature default or absent-target configuration is wrong')
+end
+T.loaded.BattleGroundEnemiesFixed = true
+local bgePopups, bgeRefreshes = #popups, refreshes
+bgeFeatures[2].set(false); T.Flush()
+assert(not ns.SkinFeature('BattlegroundEnemiesFixed', 'dividers')
+    and EUIAdditionalSkinningDB.skinFeatures.BattlegroundEnemiesFixed.dividers == false,
+    'BGE Health/Power divider switch was not persisted')
+bgeFeatures[2].set(true); T.Flush()
+assert(ns.SkinFeature('BattlegroundEnemiesFixed', 'dividers') and EUIAdditionalSkinningDB.skinFeatures == nil,
+    'BGE divider default did not clear the saved override')
+assert(#popups == bgePopups + 2 and refreshes == bgeRefreshes + 2,
+    'BGE feature changes did not use the standard reload/refresh lifecycle')
+
+-- Typography is isolated per applicable skin. Default inherits the global value, native and
+-- explicit options remain independent, and auto-resize is reload-gated.
+local altoTypography = CogRows('Altoholic')
+local attuneTypography = CogRows('Attune')
+for _, popup in ipairs({altoTypography, attuneTypography}) do
+    assert(popup['Button Font Size'].get() == 'default' and not popup['Auto Resize Button Text'].get()
+        and popup['Minimum Auto Font Size'].get() == 8, 'typography defaults are wrong')
+    assert(not popup['Button Font Size'].disabled(), 'font dropdown disabled while auto resize is off')
+    assert(popup['Minimum Auto Font Size'].disabled(), 'minimum size is enabled while auto resize is off')
+end
+local typographyPopups = #popups
+altoTypography['Button Font Size'].set(11)
+altoTypography['Auto Resize Button Text'].set(true)
+altoTypography['Minimum Auto Font Size'].set(6)
+T.Flush()
+assert(ns.ButtonFontSelection('Altoholic') == 11 and ns.ConfiguredAutoResizeButtonText('Altoholic')
+    and not ns.AutoResizeButtonText('Altoholic')
+    and ns.MinimumAutoFontSize('Altoholic') == 6, 'Altoholic typography did not persist')
+assert(ns.ButtonFontSelection('Attune') == 'default' and not ns.AutoResizeButtonText('Attune'),
+    'one skin typography changed another')
+assert(altoTypography['Button Font Size'].disabled() and not altoTypography['Minimum Auto Font Size'].disabled()
+    and #popups == typographyPopups + 1 and popups[#popups].confirmText == 'Reload UI',
+    'auto-resize did not preserve pending state or request the required reload')
+assert(not CogRows('DeadlyBossMods')['Button Font Size'], 'buttonless DBM exposes typography controls')
+local naowhTypography = CogRows('NaowhForever')
+assert(not naowhTypography['Button Font Size'] and not naowhTypography['Auto Resize Button Text']
+    and not naowhTypography['Minimum Auto Font Size'], 'Naowh exposes shared typography controls')
+
 SlashCmdList.EUIADDITIONALSKINNING('options')
 assert(opened == T.ADDON, '/eas options does not open the page')
-print('PASS: EUI plugin section, catalog rows and skin definitions, locks (absent addon, master; none for other skinning addons), debounced reload prompts, switch-on applied at once, /eas options')
+print('PASS: compact skin rows, native cog settings, isolated typography, optional components, persistence, reload lifecycle and /eas options')

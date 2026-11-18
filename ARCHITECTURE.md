@@ -105,13 +105,17 @@ the modules load. That replacement is the addon's one exception to "post-hooks o
 
 `EUIAdditionalSkinningDB`: `disabled`, `skins[id]`, `naowh` (the Naowh keys and the `manual`
 border table, validated by `Integrations/NaowhForever/Config.lua`), `euiWindows`, `euiBags`,
-`debug` (Debug Mode), `buttonStyle` (`"gamemenu"`; unset = EllesmereUI windows), `buttonStyles[id]` (per skin; unset = the default), `dumps` (dev tools). The
-options section (`Options.lua`,
-EUI's plugin API) has a Skins page (the master switch, one row per catalog entry, and the
-EllesmereUI window and bag borders, then the border settings: the style, copied or manual, and
-Naowh's border switches, built by the Naowh options file as `ns.BorderSections`) and the Naowh
-Forever Additional Settings page (Naowh's look and components); changes
-save at once and a reload is offered once the player stops changing things.
+`debug` (Debug Mode), `buttonStyle` (`"gamemenu"`; unset = EllesmereUI windows), `buttonStyles[id]`
+(per skin; unset = the default), `defaultButtonFontSize` (unset = 8), `skinSettings[id]`
+(declarative values, including per-skin typography selection and auto-resize preference),
+and `dumps` (dev tools). Existing `buttonStyles`, `skinFeatures` and `naowh` keys remain in their
+original locations for SavedVariables compatibility.
+
+`Settings.lua` owns the declarative registry and compact saved values. `Options.lua` renders one
+toggle plus EllesmereUI's native `BuildInlineCog` on every catalog row; the lazy shared cog popup
+is populated from button metadata, optional features and `ns.RegisterSkinSettings`. Disabled or
+absent targets remain configurable. Naowh registers all of its former page sections into the same
+popup, including copied/manual borders, and no longer creates a second options page.
 
 
 ## Button style
@@ -121,14 +125,29 @@ Core wraps the facade EllesmereUI hands each skin (`ns.StyledFacade`, `Widgets.l
 Popup Menu button colour (`EllesmereUIDB.popupMenuButtonBackgroundColor`) and EllesmereUI's
 configured `popupMenuButton` border, and hides the window fill and border; the window style shows
 them again. The style is the skin's own (`buttonStyles[id]`, the facade knows its skin) or the
-default (`buttonStyle`). Per button the applied style is remembered, so passes repeat nothing; the Skins page
-setting repaints every styled button at once. The inset is in `ns.OwnFrames`.
+default (`buttonStyle`). Per button the applied style is remembered, so passes repeat nothing; a
+changed setting repaints only the owning skin's styled buttons. The inset is in `ns.OwnFrames`.
 
-The same facade fits only labels of buttons a supported skin actually sends through `S.Button`.
-It preserves the intended font properties and button geometry, shrinks oversized single-line text
-to a 9px floor, and records an overflow exception rather than shrinking below it. Weak per-object
-state and targeted method hooks handle genuine text, size and font changes; cached measurements
-make unchanged calls a no-op. There is no global Blizzard-button hook, scan, timer or `OnUpdate`.
+The same facade applies typography only to catalog entries with `typography = true`. Their absent
+per-skin value means **Default** and inherits `defaultButtonFontSize`; `"addon"` restores native
+font properties and then relinquishes control so later addon font changes remain untouched; a number from 4-32
+is an explicit fixed override. Existing numeric 8 values remain explicit rather than being
+silently converted. Naowh Forever and buttonless skins have no typography capability.
+
+Optional automatic resizing is off by default and its active state is snapshotted at load. A saved
+toggle therefore cannot partially activate before the requested reload. When active it ignores the
+fixed selection, starts at the original addon size, shrinks only overflowing single-line text toward
+the configured minimum (8 by default), and never enlarges. Weak per-object state and targeted text,
+size and font hooks make unchanged calls a no-op; protected updates skipped in combat use Core's
+existing combat-end event. When automatic resizing is inactive, fixed/native application never
+enters the fit engine: it installs no fit hooks, creates no fit state, and performs no text
+measurement. There is no global Blizzard-button hook, scan, timer or `OnUpdate`.
+
+`Borders.lua` owns the target-independent configured-border lifecycle used by BGE and DBM: one weak
+owner cache, colour overrides, and horizontal/vertical dividers. The Naowh runtime supplies the
+resolved action-bar/manual style but neither Naowh Forever's installation, enable state nor runtime
+initialization gates the shared service. Reading the default style for another integration does not
+create Naowh SavedVariables.
 
 ## Menus
 
@@ -151,6 +170,8 @@ shown or one of ours needs restoring.
 - A skin: catalog entry + `Skins/<Addon>.lua` (`python scripts/new_skin.py`).
 - A helper: `Helpers.lua` (`ns.AddSkinHelpers`), documented by its comment (`api_index.py`).
 - An options page: append to `ns.OptionPages` before `Options.lua` loads.
+- Per-skin options: `ns.RegisterSkinSettings(id, sections, options)`; prefer the three-dot popup to
+  a separate page.
 - A slash subcommand: `ns.SlashCommands[name] = function(argument, Print)`.
 - A non-frame integration: its own folder under `Integrations/`, a catalog entry with
   `integration = true`, `entry.onSkin` / `entry.active`, gated like `NS.Live()`.

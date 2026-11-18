@@ -367,7 +367,7 @@ end
 local fittedButtons = setmetatable({}, {__mode = "kv"})
 local fittedLabels = setmetatable({}, {__mode = "kv"})
 local EMPTY_TEXT_OPTIONS = {}
-local DEFAULT_TEXT_PADDING, DEFAULT_MIN_TEXT_SIZE, DEFAULT_ICON_GAP = 8, 9, 4
+local DEFAULT_TEXT_PADDING, DEFAULT_MIN_TEXT_SIZE, DEFAULT_ICON_GAP = 8, 8, 4
 
 local function PlainNumber(value)
     return type(value) == "number" and not (issecretvalue and issecretvalue(value))
@@ -375,7 +375,7 @@ end
 
 local function ButtonLabel(button)
     if type(button) ~= "table" and type(button) ~= "userdata" then return end
-    local label = button.GetFontString and button:GetFontString() or button.Text or button.text
+    local label = button.GetFontString and button:GetFontString() or button.Text or button.text or button.label
     if label and label.GetObjectType and label:GetObjectType() == "FontString" then return label end
 end
 
@@ -481,7 +481,9 @@ local function FitLabel(state)
 end
 
 local function InvalidateFit(state)
-    state.lastText = nil
+    -- SetText/SetSize hooks run after the value is assigned. FitLabel already compares the
+    -- current text and available dimensions with its cached result, so preserving that cache
+    -- makes repeated assignments of an unchanged value a zero-measurement fast path.
     FitLabel(state)
 end
 
@@ -489,8 +491,9 @@ local function HookFit(object, method, callback)
     if object and type(object[method]) == "function" then hooksecurefunc(object, method, callback) end
 end
 
--- Shrink an oversized styled button label to fit its current width and height. Options: padding
--- (horizontal, default 8), verticalPadding (default 2), minSize (default 9), icon and iconGap.
+-- Set or fit a styled button label without changing its geometry. Options: padding (horizontal,
+-- default 8), verticalPadding (default 2), minSize (default 8), icon, iconGap, basePath, baseSize,
+-- baseFlags and enabled (false applies baseSize without measuring).
 function ns.FitButtonText(button, options)
     local label = ButtonLabel(button)
     if not label or not label.GetFont or not label.SetFont or not label.GetText then return end
@@ -505,14 +508,16 @@ function ns.FitButtonText(button, options)
             baseFlags = flags or "", baseWordWrap = label.GetWordWrap and label:GetWordWrap(),
             baseMaxLines = label.GetMaxLines and label:GetMaxLines()}
         fittedButtons[button], fittedLabels[label] = state, state
-        local changed = function() InvalidateFit(state) end
+        local changed = function() if state.active then InvalidateFit(state) end end
         HookFit(button, "SetText", changed)
         HookFit(button, "SetWidth", changed)
         HookFit(button, "SetHeight", changed)
         HookFit(button, "SetSize", changed)
         HookFit(label, "SetText", changed)
         local fontChanged = function()
-            if state.settingFont or not state.active then return end
+            if state.settingFont then return end
+            if state.reapply then state.reapply(); return end
+            if not state.active then return end
             local fontPath, fontSize, fontFlags = label:GetFont()
             if fontPath and PlainNumber(fontSize) then
                 state.basePath, state.baseSize, state.baseFlags = fontPath, fontSize, fontFlags or ""
@@ -523,10 +528,26 @@ function ns.FitButtonText(button, options)
         HookFit(label, "SetFontObject", fontChanged)
     end
     options = options or EMPTY_TEXT_OPTIONS
+    if options.basePath or PlainNumber(options.baseSize) or options.baseFlags ~= nil then
+        local path, size, flags = state.basePath, state.baseSize, state.baseFlags
+        if options.basePath then path = options.basePath end
+        if PlainNumber(options.baseSize) then size = options.baseSize end
+        if options.baseFlags ~= nil then flags = options.baseFlags end
+        if path and PlainNumber(size) then
+            state.basePath, state.baseSize, state.baseFlags = path, size, flags or ""
+        end
+    end
     state.padding = PlainNumber(options.padding) and math.max(0, options.padding) or DEFAULT_TEXT_PADDING
     state.verticalPadding = PlainNumber(options.verticalPadding) and math.max(0, options.verticalPadding) or 2
     state.minSize = PlainNumber(options.minSize) and math.max(1, options.minSize) or DEFAULT_MIN_TEXT_SIZE
     state.icon, state.iconGap = options.icon, PlainNumber(options.iconGap) and options.iconGap or DEFAULT_ICON_GAP
+    state.active = options.enabled ~= false
+    if not state.active then
+        RestoreLabelFont(state); RestoreLabelLayout(state)
+        button.euiasTextFitSize, button.euiasTextFitOverflow = state.baseSize, nil
+        state.lastText = nil
+        return state
+    end
     FitLabel(state)
     return state
 end
@@ -561,6 +582,112 @@ end
 local buttonState = setmetatable({}, {__mode = "k"}) -- button -> applied style
 local buttonInsets = setmetatable({}, {__mode = "k"}) -- button -> its Game Menu inset
 local buttonOwners = setmetatable({}, {__mode = "k"}) -- button -> the skin id that styled it
+local buttonTypography = setmetatable({}, {__mode = "k"}) -- live button -> true; state lives on its frame
+local pendingTypography = setmetatable({}, {__mode = "k"}) -- protected buttons created in combat
+
+local function CaptureButtonTypography(btn, id)
+    local label = ButtonLabel(btn)
+    if not label or not label.GetFont then return end
+    local state = btn.euiasTypographyState
+    if not state or state.label ~= label then
+        local path, size, flags = label:GetFont()
+        if not path or not PlainNumber(size) then return end
+        state = {label = label, originalPath = path, originalSize = size,
+            originalFlags = flags or ""}
+        btn.euiasTypographyState = state
+        buttonTypography[btn] = true
+    end
+    state.owner = id
+    return state
+end
+
+-- Apply one skin's fixed/automatic button type setting. Automatic mode never grows past the
+-- target's original size; fixed mode may do so only when the user explicitly chooses it.
+function ns.ApplyButtonTypography(btn, id)
+    if not (ns.SupportsButtonTypography and ns.SupportsButtonTypography(id)) then return end
+    local managed = CaptureButtonTypography(btn, id)
+    if not managed then return end
+    if InCombatLockdown and InCombatLockdown() and btn.IsProtected and btn:IsProtected() then
+        pendingTypography[btn] = id
+        return
+    end
+    pendingTypography[btn] = nil
+    local label = managed.label
+    local automatic = ns.AutoResizeButtonText and ns.AutoResizeButtonText(id) or false
+    local mode, preferred = "default", 8
+    if ns.ResolveButtonFontSize then mode, preferred = ns.ResolveButtonFontSize(id, managed.originalSize) end
+    managed.native = not automatic and mode == "addon"
+    if not automatic then
+        -- Fixed and native modes never enter the fitting engine. Besides avoiding measurements,
+        -- this means Auto Resize OFF installs no SetText/size/show hooks and allocates no fit
+        -- state. Addon's Font Size restores the captured font once, then relinquishes control.
+        local path, size, flags = label:GetFont()
+        local wantedPath = managed.native and managed.originalPath or path or managed.originalPath
+        local wantedSize = managed.native and managed.originalSize or preferred
+        local wantedFlags = managed.native and managed.originalFlags or flags or managed.originalFlags
+        if wantedPath and PlainNumber(wantedSize)
+            and (path ~= wantedPath or size ~= wantedSize or (flags or "") ~= (wantedFlags or "")) then
+            label:SetFont(wantedPath, wantedSize, wantedFlags or "")
+        end
+        btn.euiasTextFitSize, btn.euiasTextFitOverflow = nil, nil
+        return
+    end
+
+    preferred = managed.originalSize
+    local minimum = ns.MinimumAutoFontSize and ns.MinimumAutoFontSize(id) or 8
+    minimum = math.min(preferred, minimum)
+    local options = managed.options
+    if not options then options = {}; managed.options = options end
+    local currentPath, _, currentFlags = label:GetFont()
+    options.enabled = true
+    options.basePath = currentPath or managed.originalPath
+    options.baseSize = preferred
+    options.baseFlags = currentFlags or managed.originalFlags
+    options.minSize = minimum
+    local state = ns.FitButtonText(btn, options)
+    if state then
+        if not state.reapply then
+            state.reapply = function()
+                local fontPath, fontSize, fontFlags = managed.label:GetFont()
+                if fontPath and PlainNumber(fontSize) then
+                    managed.originalPath, managed.originalSize = fontPath, fontSize
+                    managed.originalFlags = fontFlags or ""
+                end
+                if not managed.native then ns.ApplyButtonTypography(btn, managed.owner) end
+            end
+        end
+        state.owner = id
+    end
+end
+
+
+-- A global default change touches only buttons that actually inherit it. Explicit sizes and the
+-- native-font mode do no work and retain their current fonts.
+function ns.RefreshInheritedButtonTypography()
+    for btn in pairs(buttonTypography) do
+        local state = btn.euiasTypographyState
+        if ns.ButtonFontSelection and ns.ButtonFontSelection(state.owner) == "default" then
+            ns.ApplyButtonTypography(btn, state.owner)
+        end
+    end
+end
+
+-- Repaint only the already-owned buttons of one skin (or all skins) after a typography change.
+function ns.RefreshButtonTypography(id)
+    for btn in pairs(buttonTypography) do
+        local state = btn.euiasTypographyState
+        if not id or state.owner == id then ns.ApplyButtonTypography(btn, state.owner) end
+    end
+end
+
+-- Apply only protected button-font updates that were skipped in combat. Core calls this on the
+-- existing PLAYER_REGEN_ENABLED event, so no typography-specific event frame or polling exists.
+function ns.FlushButtonTypography()
+    for btn, id in pairs(pendingTypography) do
+        pendingTypography[btn] = nil
+        ns.ApplyButtonTypography(btn, id)
+    end
+end
 
 local function ButtonParts(btn)
     local E = _G.EllesmereUI
@@ -615,22 +742,37 @@ function ns.StyledFacade(S, id)
     if type(S) ~= "table" or type(S.Button) ~= "function" then return S end
     local button, font = S.Button, S.Font
     return setmetatable({Button = function(btn, ...)
+        local managed = ns.SupportsButtonTypography and ns.SupportsButtonTypography(id)
+            and CaptureButtonTypography(btn, id)
+        local fitted = managed and fittedLabels[managed.label]
+        if fitted then fitted.settingFont = true end
         local result = button(btn, ...)
+        if fitted then fitted.settingFont = false end
         if type(btn) == "table" and btn.GetObjectType then
             buttonOwners[btn] = id
             PaintButton(btn)
-            ns.FitButtonText(btn)
+            if managed then ns.ApplyButtonTypography(btn, id) end
         end
         return result
     end, Font = font and function(text, ...)
         local state = RestoreFittedLabel(text)
+        if state then state.settingFont = true end
         local result = font(text, ...)
-        if state then FitLabel(state) end
+        if state then state.settingFont = false end
+        if state then
+            if state.owner then ns.ApplyButtonTypography(state.button, state.owner)
+            elseif state.active then FitLabel(state) end
+        end
         return result
     end or nil}, {__index = S})
 end
 
 -- Re-draws every styled button in the current style (the Skins page's Button style setting).
-function ns.RefreshButtonStyle()
-    for btn in pairs(buttonState) do buttonState[btn] = buttonState[btn] and "stale" or nil; PaintButton(btn) end
+function ns.RefreshButtonStyle(id)
+    for btn in pairs(buttonState) do
+        if not id or buttonOwners[btn] == id then
+            buttonState[btn] = buttonState[btn] and "stale" or nil
+            PaintButton(btn)
+        end
+    end
 end

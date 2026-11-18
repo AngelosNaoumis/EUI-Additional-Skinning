@@ -1,4 +1,4 @@
--- Naowh Forever integration: dormant until NaowhForever's ADDON_LOADED, then wraps its shared factories in place (theme repaint, EUI font, buttons, borders); honours imported settings (useFont off); still activates when Naowh loaded first; stays inert with its row off; no old-addon guard or import; the options page covers every setting.
+-- Naowh Forever integration: load order, wrappers, settings, unified cog, borders and lifecycle.
 local function Naowh()
     local calls = {border = 0, button = 0}
     local ns = {THEME = {bg = {r = 0, g = 0, b = 0}, accent = {r = 0, g = 0, b = 0}, accentSoft = {r = 0, g = 0, b = 0},
@@ -8,7 +8,14 @@ local function Naowh()
     function ns.UIFontPath() return 'naowh-font' end
     function ns.Color(token, text) return token, text end
     function ns.Border(frame, color) calls.border = calls.border + 1; return {_frame = {SetAlpha = function() end}, SetColor = function() end} end
-    function ns.Button() calls.button = calls.button + 1; return {} end
+    function ns.Button()
+        calls.button = calls.button + 1
+        local btn = CreateFrame('Button')
+        btn.label = btn:CreateFontString(nil, 'OVERLAY')
+        btn.label:SetFont('naowh-font', 12, 'OUTLINE')
+        btn.label:SetText('Naowh Button')
+        return btn
+    end
     ns.Shared = {Style = {BORDER_RGB = {r = 0, g = 0, b = 0}}}
     return ns
 end
@@ -18,6 +25,45 @@ local function Setup(T)
     EllesmereUI.GetFontPath = function() return 'eui-font' end
     EllesmereUI.ResolveActiveAccent = function() return 0.1, 0.8, 0.6 end
     EllesmereUI.Widgets = nil
+    EllesmereUI.BuildInlineCog = nil
+end
+
+local function CaptureOptions()
+    local state = {pages = {}, rows = {}, cogs = {}}
+    EllesmereUI.RegisterPlugin = function(_, spec) state.pages = spec.modules end
+    EllesmereUI.Widgets = {
+        SectionHeader = function() return nil, 30 end,
+        Spacer = function() return nil, 10 end,
+        DualRow = function(_, _, _, left, right)
+            local frame = {_leftRegion = {}}
+            state.rows[#state.rows + 1] = left
+            state.rows[#state.rows + 1] = right
+            return frame, 40
+        end,
+    }
+    EllesmereUI.BuildInlineCog = function(region, opts)
+        state.cogs[#state.cogs + 1] = opts
+        region.cog = opts
+    end
+    return state
+end
+
+local function BuildSkinSettings(state, label)
+    state.rows, state.cogs = {}, {}
+    local page
+    for _, module in ipairs(state.pages) do if module.key == 'Skins' then page = module end end
+    assert(page, 'no Skins page')
+    page.buildPage('Skins', {}, -10)
+    local main = {}
+    for _, row in ipairs(state.rows) do if row and row.text then main[row.text] = row end end
+    local popup
+    for _, cog in ipairs(state.cogs) do if cog.title == label .. ' Settings' then popup = cog end end
+    assert(popup, 'no settings cog for ' .. label)
+    local settings = {}
+    for _, section in ipairs(popup.sections or {}) do
+        for _, row in ipairs(section.rows or {}) do if row.label then settings[row.label] = row end end
+    end
+    return settings, main, popup
 end
 
 -- 1. Load order: nothing until NaowhForever's own ADDON_LOADED, then everything at once.
@@ -32,6 +78,9 @@ T.loaded.NaowhForever = true
 T.Fire('ADDON_LOADED', 'NaowhForever')
 assert(original.Border ~= border and original.UIFontPath ~= font and original.Button ~= button, 'factories not wrapped at Naowh load')
 assert(original.UIFontPath() == 'eui-font', 'EUI font not handed to Naowh')
+local naowhButton = original.Button()
+assert(select(2, naowhButton.label:GetFont()) == 12,
+    'Naowh native button typography was modified')
 original.ApplyThemeColors()
 assert(math.abs(original.THEME.accent.g - 0.8) < 1e-6, 'theme not repainted with the EUI accent')
 original.Border(T.Frame('Frame'), original.THEME.line)
@@ -82,37 +131,22 @@ T.Fire('PLAYER_LOGIN')
 assert(original.Border ~= border and A.Naowh.Config:Get().useFont == true and EUIAdditionalSkinningDB.imported == nil,
     'another Naowh skin addon deactivated the integration, or its settings were imported')
 
--- 5. Every setting has a control: Naowh's look and components on its own page, the border
--- settings (copy or manual style, Naowh's border switches) on the Skins page.
+-- 5. Every Naowh setting is consolidated in its three-dot popup; no duplicate page remains.
 T = dofile('tests/support.lua'); Setup(T)
-local pages, rows = {}, {}
-EllesmereUI.RegisterPlugin = function(_, spec) pages = spec.modules end
-EllesmereUI.Widgets = {SectionHeader = function() return nil, 30 end, Spacer = function() return nil, 10 end,
-    DualRow = function(_, _, _, left, right) rows[#rows + 1] = left; rows[#rows + 1] = right; return nil, 40 end}
+local optionState = CaptureOptions()
 A = T.Load()
-local function BuildPage(key)
-    local found
-    for _, module in ipairs(pages) do if module.key == key then found = module end end
-    assert(found, 'no page ' .. key)
-    rows = {}
-    found.buildPage(found.pages[1], {}, -10)
-    local byText = {}
-    for _, row in ipairs(rows) do if row.text then byText[row.text] = row end end
-    return byText, found
+local texts, skinTexts, popup = BuildSkinSettings(optionState, 'Naowh Forever')
+for _, module in ipairs(optionState.pages) do
+    assert(module.key ~= 'NaowhForever', 'obsolete standalone Naowh page is still registered')
 end
-local naowhTexts, page = BuildPage('NaowhForever')
-local skinTexts = BuildPage('Skins')
-local texts = {}
-for text, row in pairs(naowhTexts) do texts[text] = row end
-for text, row in pairs(skinTexts) do texts[text] = row end
 local config = A.Naowh.Config
 for _, key in ipairs(config.FEATURE_KEYS) do
     local found
     for _, row in pairs(texts) do
-        if row.getValue and row.type == 'toggle' then
+        if row.get and row.type == 'toggle' then
             local before = config:Get()[key]
             config:Get()[key] = not before
-            if row.getValue() ~= (not before) then config:Get()[key] = before else found = true; config:Get()[key] = before end
+            if row.get() ~= (not before) then config:Get()[key] = before else found = true; config:Get()[key] = before end
         end
         if found then break end
     end
@@ -121,20 +155,20 @@ end
 local BORDER_ROWS = {'Enable custom borders', 'Copy Main Action Bar 1 border', 'Divider strength', 'Button-border strength',
     'Border Style', 'Shift X', 'Shift Y', 'Border Color', 'Class Color', 'Show Behind'}
 for _, text in ipairs(BORDER_ROWS) do
-    assert(skinTexts[text], 'border control not on the Skins page: ' .. text)
-    assert(not naowhTexts[text], 'border control still on the Naowh page: ' .. text)
+    assert(texts[text], 'border control not in the Naowh cog: ' .. text)
+    assert(not skinTexts[text], 'border control leaked onto the main Skins page: ' .. text)
 end
 for _, text in ipairs({'Use EllesmereUI font', 'Naowh window borders', 'Enable All', 'Disable All', 'Reset to Defaults'}) do
-    assert(naowhTexts[text] and not skinTexts[text], 'Naowh control not on its own page: ' .. text)
+    assert(texts[text] and not skinTexts[text], 'Naowh control not isolated in its cog: ' .. text)
 end
-assert(page.title == 'Naowh Forever Additional Settings', 'page not renamed: ' .. tostring(page.title))
-skinTexts['Divider strength'].setValue(30)
+assert(popup.title == 'Naowh Forever Settings', 'popup title is wrong: ' .. tostring(popup.title))
+texts['Divider strength'].set(30)
 assert(config:Get().borderAlpha == 30, 'slider does not save')
--- The border style serves the EllesmereUI borders too: with Naowh Forever's row off it stays
--- editable, while Naowh's own border switches lock.
+-- Disabled and absent skins remain configurable before they are enabled.
 EUIAdditionalSkinningDB.skins = {NaowhForever = false}
-assert(not skinTexts['Copy Main Action Bar 1 border'].disabled(), 'border style locked with Naowh Forever off')
-assert(skinTexts['Enable custom borders'].disabled() and skinTexts['Divider strength'].disabled(), 'Naowh border switches open with Naowh off')
+assert(not texts['Copy Main Action Bar 1 border'].disabled(), 'border style locked with Naowh Forever off')
+assert(not texts['Enable custom borders'].disabled() and not texts['Divider strength'].disabled(),
+    'Naowh settings cannot be prepared while its row is off')
 EUIAdditionalSkinningDB.skins = nil
 
 -- 5b. Manual border: Main Action Bar 1's option set, built from EllesmereUI's own border controls
@@ -162,17 +196,11 @@ E.ApplyBorderStyle = function(target, size, r, g, b, a, texture, offX, offY, shi
     styled[target] = {size = size, r = r, g = g, b = b, a = a, texture = texture, offX = offX, offY = offY,
         shiftX = shiftX, shiftY = shiftY, key = key, sizeKey = sizeKey, px = px}
 end
-pages, rows = {}, {}
-E.RegisterPlugin = function(_, spec) pages = spec.modules end
-E.Widgets = {SectionHeader = function() return nil, 30 end, Spacer = function() return nil, 10 end,
-    DualRow = function(_, _, _, left, right) rows[#rows + 1] = left; rows[#rows + 1] = right; return nil, 40 end}
+optionState = CaptureOptions()
 A = T.Load()
 T.Fire('ADDON_LOADED', T.ADDON)
 config = A.Naowh.Config
-for _, module in ipairs(pages) do if module.key == 'Skins' then page = module end end
-page.buildPage('Skins', {}, -10)
-texts = {}
-for _, row in ipairs(rows) do if row.text then texts[row.text] = row end end
+texts = BuildSkinSettings(optionState, 'Naowh Forever')
 local MANUAL = {'Border Style', 'Border Size', 'Border Width Offset', 'Border Height Offset', 'Shift X', 'Shift Y',
     'Border Color', 'Class Color', 'Show Behind'}
 for _, text in ipairs(MANUAL) do
@@ -184,23 +212,23 @@ end
 local m = config:Manual()
 assert(m.texture == 'solid' and m.thickness == 'strong' and m.r == 0.5, 'manual border not seeded from the old edge')
 -- Copy off: manual controls open; offsets and shifts only for a textured style.
-texts['Copy Main Action Bar 1 border'].setValue(false)
+texts['Copy Main Action Bar 1 border'].set(false)
 assert(config:Get().edgeMode == 'solid' and not texts['Border Style'].disabled(), 'manual controls still locked')
 assert(texts['Shift X'].disabled() and texts['Shift X'].disabledTooltip():find('Textured', 1, true), 'shift open on a solid style')
-texts['Border Style'].setValue('pixels')
+texts['Border Style'].set('pixels')
 assert(m.texture == 'pixels' and m.thickness == 'normal' and m.behind == true and m.r == 0.1, 'style pick did not take its defaults')
 assert(not texts['Shift X'].disabled(), 'shift locked on a textured style')
-texts['Border Size'].setValue(6); texts['Border Width Offset'].setValue(3); texts['Border Height Offset'].setValue(-1)
-texts['Shift X'].setValue(2); texts['Shift Y'].setValue(0)
-texts['Border Color'].setValue(0.9, 0.8, 0.7, 0.6); texts['Show Behind'].setValue(false)
+texts['Border Size'].set(6); texts['Border Width Offset'].set(3); texts['Border Height Offset'].set(-1)
+texts['Shift X'].set(2); texts['Shift Y'].set(0)
+texts['Border Color'].set(0.9, 0.8, 0.7, 0.6); texts['Show Behind'].set(false)
 assert(m.thickness == 'strong' and m.px == '6px' and m.offX == 3 and m.offY == -1 and m.shiftX == 2 and m.shiftY == nil
     and m.r == 0.9 and m.a == 0.6 and m.behind == false, 'a manual value did not save')
-texts['Class Color'].setValue(true); assert(m.classColor == true, 'class colour did not save')
-texts['Class Color'].setValue(false)
+texts['Class Color'].set(true); assert(m.classColor == true, 'class colour did not save')
+texts['Class Color'].set(false)
 -- Copy on again keeps every manual value; off again finds them as left.
-texts['Copy Main Action Bar 1 border'].setValue(true)
+texts['Copy Main Action Bar 1 border'].set(true)
 assert(texts['Border Style'].disabled() and m.px == '6px' and m.offX == 3 and m.texture == 'pixels', 'copy mode erased the manual border')
-texts['Copy Main Action Bar 1 border'].setValue(false)
+texts['Copy Main Action Bar 1 border'].set(false)
 assert(config:Manual().texture == 'pixels' and config:Manual().r == 0.9, 'manual values lost switching back')
 
 -- The renderer draws the manual border with every value; Show Behind keeps the element's level.
@@ -275,6 +303,29 @@ T.Fire('ADDON_LOADED', 'NaowhForever')
 T.loaded.EllesmereUIBlizzardSkin = true
 T.Fire('PLAYER_LOGIN'); T.Flush()
 T.registered[T.PREFIX .. 'Naowh Forever'](T.S); T.Flush()
+
+-- The public divider companion used by DBM creates one texture, reuses the resolved global style,
+-- and only rewrites anchors when its requested icon side actually changes.
+local divider = T.Frame('Frame'); divider:SetSize(20, 20)
+assert(A.ApplyConfiguredDividerV(divider, false), 'configured divider helper rejected a valid frame')
+local dividerTexture = divider.regions[1]
+assert(#divider.regions == 1 and dividerTexture.points[1][3] == 'TOPRIGHT', 'left-icon divider is on the wrong edge')
+local dividerPoints = #dividerTexture.points
+assert(A.ApplyConfiguredDividerV(divider, false) and #divider.regions == 1 and #dividerTexture.points == dividerPoints,
+    'unchanged configured divider was recreated or reanchored')
+assert(A.ApplyConfiguredDividerV(divider, true) and #divider.regions == 1
+    and dividerTexture.points[1][3] == 'TOPLEFT', 'right-icon divider was not reoriented in place')
+
+local horizontal = T.Frame('Frame'); horizontal:SetSize(100, 8)
+assert(A.ApplyConfiguredDividerH(horizontal, true), 'horizontal divider helper rejected a valid frame')
+local horizontalTexture = horizontal.regions[1]
+assert(#horizontal.regions == 1 and horizontalTexture.points[1][3] == 'TOPLEFT',
+    'health/power divider was not placed on the requested top edge')
+local horizontalPoints = #horizontalTexture.points
+assert(A.ApplyConfiguredDividerH(horizontal, true) and #horizontal.regions == 1
+    and #horizontalTexture.points == horizontalPoints, 'unchanged horizontal divider was recreated or reanchored')
+assert(A.ApplyConfiguredDividerH(horizontal, false) and horizontalTexture.points[1][3] == 'BOTTOMLEFT',
+    'horizontal divider was not reoriented in place')
 
 -- A: a large HUD element on UIParent (Restock: five lines, transparent "none" background) is a
 -- HUD element, never a window: no shell (no background), but it keeps its HUD border.
@@ -373,7 +424,7 @@ local function Texts(key)
 end
 local skinsPage, naowhPage = Texts('Skins'), Texts('NaowhForever')
 assert(skinsPage['Border EllesmereUI windows'] and skinsPage['Border EllesmereUI bags'], 'EllesmereUI toggles missing from the Skins page')
-assert(not naowhPage['Border EllesmereUI windows'] and not naowhPage['Border EllesmereUI bags'], 'EllesmereUI toggles still on the Naowh page')
+assert(next(naowhPage) == nil, 'obsolete Naowh settings page is still registered')
 EUIAdditionalSkinningDB.skins = {NaowhForever = false}
 local windows = skinsPage['Border EllesmereUI windows']
 assert(not windows.disabled() and windows.getValue(), 'EllesmereUI toggle locked by the Naowh row')
@@ -408,17 +459,12 @@ local MANUAL_SET = {texture = 'pixels', thickness = 'heavy', px = '6px', r = 0.2
     classColor = false, offX = 2, behind = true}
 EUIAdditionalSkinningDB = {debug = true, euiWindows = false, euiBags = false, skins = {Altoholic = false},
     naowh = {edgeMode = 'solid', borderAlpha = 40, manual = MANUAL_SET}}
-pages, rows = {}, {}
-EllesmereUI.RegisterPlugin = function(_, spec) pages = spec.modules end
-EllesmereUI.Widgets = {SectionHeader = function() return nil, 30 end, Spacer = function() return nil, 10 end,
-    DualRow = function(_, _, _, left, right) rows[#rows + 1] = left; rows[#rows + 1] = right; return nil, 40 end}
+optionState = CaptureOptions()
+local resetConfirm
+EllesmereUI.ShowConfirmPopup = function(_, spec) resetConfirm = spec end
 A = T.Load()
 T.Fire('ADDON_LOADED', T.ADDON)
-local naowhPage
-for _, module in ipairs(pages) do if module.key == 'NaowhForever' then naowhPage = module end end
-naowhPage.buildPage('Naowh Forever', {}, -10)
-local buttons = {}
-for _, row in ipairs(rows) do if row.type == 'button' then buttons[row.text] = row end end
+local buttons = BuildSkinSettings(optionState, 'Naowh Forever')
 local function Unrelated()
     local db = EUIAdditionalSkinningDB
     return db.debug == true and db.euiWindows == false and db.euiBags == false and db.skins.Altoholic == false
@@ -427,17 +473,19 @@ local function ManualKept()
     local m = A.Naowh.Config:Manual()
     return m.texture == 'pixels' and m.thickness == 'heavy' and m.px == '6px' and m.a == 0.5 and m.offX == 2 and m.behind == true
 end
-buttons['Disable All'].onClick()
+buttons['Disable All'].action()
 local cfg = A.Naowh.Config:Get()
 for _, key in ipairs(A.Naowh.Config.FEATURE_KEYS) do assert(cfg[key] == false, 'Disable All left ' .. key .. ' on') end
 assert(ManualKept() and cfg.edgeMode == 'solid' and Unrelated(), 'Disable All changed the manual border or another setting')
-buttons['Enable All'].onClick()
+buttons['Enable All'].action()
 for _, key in ipairs(A.Naowh.Config.FEATURE_KEYS) do assert(cfg[key] == true, 'Enable All left ' .. key .. ' off') end
 assert(ManualKept() and cfg.edgeMode == 'solid' and cfg.borderAlpha == 40 and Unrelated(), 'Enable All changed the manual border or another setting')
-buttons['Reset to Defaults'].onClick()
+buttons['Reset to Defaults'].action()
+assert(resetConfirm and resetConfirm.onConfirm, 'Reset to Defaults did not ask for confirmation')
+resetConfirm.onConfirm()
 local m = A.Naowh.Config:Manual()
 assert(cfg.edgeMode == 'actionbars' and cfg.borderAlpha == A.Naowh.Config.DEFAULTS.borderAlpha and m.texture == 'solid'
     and m.px == false and m.offX == nil and m.behind == false, 'Reset to Defaults kept a Naowh setting or the manual border')
 assert(Unrelated(), 'Reset to Defaults changed the EllesmereUI borders, Debug Mode or a skin switch')
 
-print('PASS: Naowh dormant until its ADDON_LOADED, factories wrapped in place, saved settings honoured, Naowh-first activation, inert switched off, no guard or import, every setting on the options pages (border settings on the Skins page), manual border (complete option set, locked while copying, kept across modes, drawn as set, Show Behind), issues A-D (HUD never shelled, clipped cards bordered beside, loot roll and loot toast bordered), EllesmereUI borders independent of Naowh with their toggles on the Skins page, /easnf status and edge, bulk actions scoped to Naowh')
+print('PASS: Naowh load order, factory wrappers, saved settings, unified cog, manual borders, HUD/window cases, EUI borders, commands and scoped bulk actions')

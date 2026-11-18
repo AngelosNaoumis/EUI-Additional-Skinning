@@ -1,15 +1,17 @@
 ## Interface: 16001
 ## Title: EUI Additional Skinning
-## Notes: EllesmereUI skins for Altoholic, Attune, Auctionator, BugSack, Forever Dungeon Journal, GearQuest Forever, Hunter's Field Guide, Naowh Forever, OneForAll and What's Training?.
+## Notes: EllesmereUI skins for supported addons including BattlegroundEnemiesFixed, DBM timers, LagBuddy, GearQuest Forever and Naowh Forever.
 ## Author: AngelosNaoumis
 ## X-License: MIT
-## Version: 2.2.0
+## Version: 2.3.0
 ## Dependencies: EllesmereUI
 ## OptionalDeps: EllesmereUIBlizzardSkin, EllesmereUIActionBars, EllesmereUIFriends, EllesmereUIBags
 ## SavedVariables: EUIAdditionalSkinningDB
 
 Catalog.lua
 Core.lua
+Settings.lua
+Borders.lua
 Accent.lua
 Widgets.lua
 Helpers.lua
@@ -31,3 +33,6 @@ Skins\OneForAll.lua
 Skins\WhatsTraining.lua
 Skins\GearQuestForever.lua
 Skins\HuntersFieldGuide.lua
+Skins\BattlegroundEnemiesFixed.lua
+Skins\DeadlyBossMods.lua
+Skins\LagBuddy.lua

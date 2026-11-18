@@ -8,7 +8,7 @@ Naowh Forever's flat "Naowh" look in EllesmereUI's palette, accent and font; Ell
 shells on Naowh windows; the border of the user's EllesmereUI Main Action Bar 1 (or the manual border)
 on item buttons, HUD elements, trackers, PvP and raid aura icons, GCD icons, the focus cast bar
 (one hull with a divider) and the top bar's groups; dark item plates. The EllesmereUI window and bag
-borders live in the same file and use this page's border style, but are switched on the Skins page
+borders live in the same file and use this popup's border style, but are switched on the Skins page
 and work without Naowh Forever (ARCHITECTURE.md). Naowh's metal "Forever" look is left
 alone (a chat line says so). No border on on-screen alerts or the minimap layer readout.
 
@@ -41,9 +41,11 @@ Installed on Forever (Naowh Forever 1.2.32): check in game.
   `initializeFrame` phase; never a script, never a branch on their secret `IsShown()`.
 - **Hidden frames stay hidden:** applying a border never shows a frame Naowh built hidden.
 - Settings apply after `/reload`: the styling state is fixed for the session.
-- **Border settings live on the Skins page** (Borders, Manual Border; `A.BorderSections` built in
-  `Options.lua` here): the style is shared with the EllesmereUI window and bag borders, so it locks
-  only while skinning is off; Naowh's own border switches also lock while Naowh Forever is off.
+- **One settings popup:** appearance, component switches, copied/manual borders
+  and bulk actions are registered through `A.RegisterSkinSettings` and rendered by the Naowh row's
+  three-dot control. The old standalone page and expanded border sections were removed. Settings
+  remain editable while Naowh is absent or switched off. Shared button typography is deliberately
+  excluded: Naowh's button factory and later native font updates retain their own sizes.
 - **Border modes:** "Copy Main Action Bar 1 border" (`edgeMode = "actionbars"`) reads that bar's
   border once after login. Off (`"solid"`), the manual border (`naowh.manual`) is drawn: the
   action bar page's option set, edited with EllesmereUI's own controls (`GetBorderTextureDropdown`,
@@ -71,7 +73,7 @@ nothing: there is no GCD ticker or extras poll.
 ## Integration wiring
 
 Namespace wiring, the `NS.Live()` gate,
-the facade through the catalog, the player-only GCD event, the settings page in EUI's options.
+the facade through the catalog, the player-only GCD event, and the declarative three-dot settings.
 
 ## Known limits
 

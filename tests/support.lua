@@ -67,6 +67,7 @@ function Texture:SetVertexColor(...) self.vertex = {...} end
 function Texture:GetVertexColor() return table.unpack(self.vertex or {1, 1, 1, 1}) end
 function Texture:SetDesaturated(v) self.desaturated = v end
 function Texture:GetAlpha() return self.alpha end
+function Texture:GetEffectiveAlpha() return (self.alpha or 1) * (self.parent and self.parent:GetEffectiveAlpha() or 1) end
 function Texture:SetAlpha(a) self.alpha = a end
 function Texture:SetShown(v) self.shown = v end
 function Texture:Show() self.shown = true end
@@ -124,6 +125,15 @@ function Frame:IsForbidden() return self.forbidden end
 function Frame:IsProtected() return self.protected end
 function Frame:GetName() return self.name end
 function Frame:GetParent() return self.parent end
+function Frame:SetParent(parent)
+    if self.parent then
+        for i, child in ipairs(self.parent.children) do
+            if child == self then table.remove(self.parent.children, i); break end
+        end
+    end
+    self.parent = parent
+    if parent then parent.children[#parent.children + 1] = self end
+end
 function Frame:GetChildren() return table.unpack(self.children) end
 function Frame:GetRegions() return table.unpack(self.regions) end
 function Frame:GetNumChildren() return #self.children end

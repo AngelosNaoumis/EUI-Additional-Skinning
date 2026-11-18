@@ -48,7 +48,14 @@ local function Button(text)
     return button
 end
 
-local ns = {}
+local automatic = true
+local ns = {
+    SupportsButtonTypography = function() return true end,
+    ResolveButtonFontSize = function(_, original) return 'fixed', original end,
+    ButtonFontSelection = function() return 'default' end,
+    AutoResizeButtonText = function() return automatic end,
+    MinimumAutoFontSize = function() return 8 end,
+}
 assert(loadfile(root .. '/Widgets.lua'))('EUIAdditionalSkinning', ns)
 local S = ns.StyledFacade({
     Button = function() end,
@@ -75,8 +82,39 @@ collectgarbage('collect'); collectgarbage('stop')
 heap, started = collectgarbage('count'), os.clock()
 for index = 1, 10000 do dynamic:SetText(index % 2 == 0 and 'Localized long label' or 'OK') end
 local dynamicTime, dynamicAllocated = os.clock() - started, collectgarbage('count') - heap
+local dynamicMeasure, dynamicFonts = counters.measure, counters.fonts
 collectgarbage('restart')
 
-print(string.format('MEASURE warm %.6f %.3f %d %d dynamic %.6f %.3f %d %d',
+local steady = buttons[1].label
+counters.measure, counters.fonts = 0, 0
+collectgarbage('collect'); collectgarbage('stop')
+heap, started = collectgarbage('count'), os.clock()
+for _ = 1, 10000 do steady:SetText('OK') end
+local steadyTime, steadyAllocated = os.clock() - started, collectgarbage('count') - heap
+local steadyMeasure, steadyFonts = counters.measure, counters.fonts
+collectgarbage('restart')
+
+automatic = false
+local disabled = {}
+for index = 1, 200 do
+    disabled[index] = Button('A long label that must never be measured while automatic fitting is off')
+    S.Button(disabled[index])
+end
+counters.measure, counters.fonts = 0, 0
+collectgarbage('collect'); collectgarbage('stop')
+heap, started = collectgarbage('count'), os.clock()
+for index = 1, 10000 do
+    local button = disabled[index % #disabled + 1]
+    button.label:SetText(index % 2 == 0 and 'Changed long label' or 'OK')
+    button:SetWidth(index % 2 == 0 and 80 or 140)
+    S.Button(button)
+end
+local disabledTime, disabledAllocated = os.clock() - started, collectgarbage('count') - heap
+local disabledMeasure, disabledFonts = counters.measure, counters.fonts
+collectgarbage('restart')
+
+print(string.format('MEASURE warm %.6f %.3f %d %d dynamic %.6f %.3f %d %d steady %.6f %.3f %d %d disabled %.6f %.3f %d %d',
     warmTime, warmAllocated, warmMeasure, warmFonts,
-    dynamicTime, dynamicAllocated, counters.measure, counters.fonts))
+    dynamicTime, dynamicAllocated, dynamicMeasure, dynamicFonts,
+    steadyTime, steadyAllocated, steadyMeasure, steadyFonts,
+    disabledTime, disabledAllocated, disabledMeasure, disabledFonts))

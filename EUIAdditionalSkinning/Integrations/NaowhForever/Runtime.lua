@@ -359,11 +359,22 @@ local function EdgeStyle()
     return style
 end
 
+-- Standalone integrations use the shared border service. The provider reads the same configured
+-- style, but is available regardless of whether Naowh Forever is installed, enabled or initialized.
+A.SetConfiguredBorderStyleProvider(function()
+    if not db then
+        local root = A.DB()
+        -- Standalone skins must not manufacture Naowh SavedVariables merely to read the shared
+        -- default/action-bar border. Existing configured values are still honoured.
+        db = type(root.naowh) == "table" and NS.Config:Get() or NS.Config.DEFAULTS
+    end
+    return EdgeStyle()
+end)
+
 -- EllesmereUI draws a textured border at its frame's own level, so a status bar, cooldown or icon
 -- on a child frame covers it. The border goes one level above the highest child instead.
 local CHILD_DEPTH, LEVEL_CAP = 3, 9000
-local ours = setmetatable({}, { __mode = "k" })   -- our border frames, left out of the level search
-A.OwnFrames = ours -- and out of every skin (H.Allowed refuses them)
+local ours = A.OwnFrames -- our border frames, left out of the level search and every skin
 local applied = setmetatable({}, { __mode = "k" }) -- frame -> true once its border is drawn
 local tints = setmetatable({}, { __mode = "k" })   -- frame -> colour Naowh last gave its own edge
 local SyncShown
@@ -1277,10 +1288,10 @@ local function Install()
     -- Naowh's button rests on the palette line colour; EllesmereUI's buttons have a brighter edge.
     -- Primary buttons swap their rest colour to the accent afterwards, which is left alone.
     local button = ns.Button
-    if db.useColors and type(button) == "function" then
+    if type(button) == "function" then
         ns.Button = function(...)
             local btn = button(...)
-            if Skinned() and btn and btn._border and btn._rest == ns.THEME.line then
+            if db.useColors and Skinned() and btn and btn._border and btn._rest == ns.THEME.line then
                 btn._rest = BUTTON_REST
                 btn._border:SetColor(BUTTON_REST.r, BUTTON_REST.g, BUTTON_REST.b, 1)
             end
