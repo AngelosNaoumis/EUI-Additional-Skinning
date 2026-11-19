@@ -58,14 +58,15 @@ default look, delete `Interface/Tooltips`.
 EUI's options panel has an **Additional Skinning** section (`/eas options`):
 
 - **Skins:** the master switch, **Enable Debug Mode** (off by default), **Default button style**,
-  **Default Button Font Size** (8; range 4-32),
+  **Default Button Font Size** (8; range 4-32), **Disable Button Text Wrapping** (off by default),
   and one compact row per addon: its enable toggle and an EllesmereUI three-dot settings button.
   The three-dot button stays available when the skin or target addon is disabled, so preferences
   can be prepared before enabling it. Each skin also has its own toggle on EUI's Window Skins page
   (Third-Party Addons, "EUI Additional Skinning - ..."); a skin runs only when both are on.
 - **Per-skin three-dot settings:** only applicable controls are shown. Eligible button skins expose
   **Button Style**, **Button Font Size** (**Default**, **Addon's Font Size**, or 4-32), **Auto Resize
-  Button Text** (default Off), and **Minimum Auto Font Size** (default 8). BattlegroundEnemiesFixed and DBM component switches live
+  Button Text** (default Off), **Button Text Wrapping** (**Default**, **Enabled**, or **Disabled**),
+  and **Minimum Auto Font Size** (default 8). BattlegroundEnemiesFixed and DBM component switches live
   here instead of expanding the main page. Every configurable popup has a confirmed
   **Reset to Defaults** action.
 - **Naowh Forever:** its appearance, components, borders, manual border controls and bulk actions
@@ -90,7 +91,9 @@ requires confirmation before reloading; choosing **Later** leaves the current se
 Its font-size dropdown is disabled while automatic mode is configured or still active pending a
 reload. Only active automatic mode installs targeted text/dimension hooks; while it is off there are
 no fit measurements, fit writes, or fit-state allocations. There is no polling. Fixed sizes, the
-global default and button styles apply live.
+global default, wrapping and button styles apply live. Wrapping **Default** inherits the global
+toggle, **Enabled** preserves the addon's captured layout, and **Disabled** keeps eligible
+single-line labels from wrapping; intentional multiline controls remain unchanged.
 
 ## Commands
 

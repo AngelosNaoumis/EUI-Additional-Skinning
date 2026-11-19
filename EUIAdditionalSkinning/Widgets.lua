@@ -402,6 +402,17 @@ local function RestoreLabelLayout(state)
         and label:GetMaxLines() ~= state.baseMaxLines then label:SetMaxLines(state.baseMaxLines) end
 end
 
+local function ApplyLabelLayout(state)
+    if not state.disableWrap then RestoreLabelLayout(state); return end
+    local label = state.label
+    if label.GetWordWrap and label.SetWordWrap and label:GetWordWrap() ~= false then
+        label:SetWordWrap(false)
+    end
+    if label.GetMaxLines and label.SetMaxLines and label:GetMaxLines() ~= 1 then
+        label:SetMaxLines(1)
+    end
+end
+
 local function VisibleIconWidth(state)
     local button = state.button
     local icon = state.icon or button.icon or button.Icon
@@ -434,9 +445,8 @@ local function FitLabel(state)
     local availableHeight = height - state.verticalPadding * 2
     if availableWidth <= 0 or availableHeight <= 0 then return end
 
-    local maxLines = label.GetMaxLines and label:GetMaxLines()
     if button.euiasAllowMultiline or label.euiasAllowMultiline
-        or PlainNumber(maxLines) and maxLines > 1 then
+        or PlainNumber(state.baseMaxLines) and state.baseMaxLines > 1 then
         RestoreLabelFont(state); RestoreLabelLayout(state)
         button.euiasTextFitSize, button.euiasTextFitOverflow = nil, nil
         state.lastText = nil
@@ -444,7 +454,8 @@ local function FitLabel(state)
     end
     if state.lastText == text and state.lastWidth == availableWidth and state.lastHeight == availableHeight
         and state.lastPath == state.basePath and state.lastSize == state.baseSize
-        and state.lastFlags == state.baseFlags and state.lastMin == state.minSize then return end
+        and state.lastFlags == state.baseFlags and state.lastMin == state.minSize
+        and state.lastDisableWrap == state.disableWrap then return end
     local currentHeight = label.GetStringHeight and label:GetStringHeight()
     if height >= 36 and PlainNumber(currentHeight) and currentHeight > state.baseSize * 1.5 then return end
 
@@ -455,15 +466,14 @@ local function FitLabel(state)
     local needsFit = not PlainNumber(measuredWidth) or measuredWidth > availableWidth
         or PlainNumber(measuredHeight) and measuredHeight > availableHeight
     if not needsFit then
-        RestoreLabelLayout(state)
+        ApplyLabelLayout(state)
         button.euiasTextFitSize, button.euiasTextFitOverflow = size, nil
         state.lastText, state.lastWidth, state.lastHeight = text, availableWidth, availableHeight
         state.lastPath, state.lastSize, state.lastFlags = state.basePath, state.baseSize, state.baseFlags
-        state.lastMin = state.minSize
+        state.lastMin, state.lastDisableWrap = state.minSize, state.disableWrap
         return
     end
-    if label.SetWordWrap then label:SetWordWrap(false) end
-    if label.SetMaxLines then label:SetMaxLines(1) end
+    ApplyLabelLayout(state)
     measuredWidth, measuredHeight = MeasureLabel(label)
     while size > minSize and (not PlainNumber(measuredWidth) or measuredWidth > availableWidth
         or PlainNumber(measuredHeight) and measuredHeight > availableHeight) do
@@ -477,7 +487,7 @@ local function FitLabel(state)
     button.euiasTextFitOverflow = overflow or nil
     state.lastText, state.lastWidth, state.lastHeight = text, availableWidth, availableHeight
     state.lastPath, state.lastSize, state.lastFlags = state.basePath, state.baseSize, state.baseFlags
-    state.lastMin = state.minSize
+    state.lastMin, state.lastDisableWrap = state.minSize, state.disableWrap
 end
 
 local function InvalidateFit(state)
@@ -493,7 +503,8 @@ end
 
 -- Set or fit a styled button label without changing its geometry. Options: padding (horizontal,
 -- default 8), verticalPadding (default 2), minSize (default 8), icon, iconGap, basePath, baseSize,
--- baseFlags and enabled (false applies baseSize without measuring).
+-- baseFlags, baseWordWrap, baseMaxLines, disableWrap and enabled (false applies baseSize without
+-- measuring).
 function ns.FitButtonText(button, options)
     local label = ButtonLabel(button)
     if not label or not label.GetFont or not label.SetFont or not label.GetText then return end
@@ -541,6 +552,9 @@ function ns.FitButtonText(button, options)
     state.verticalPadding = PlainNumber(options.verticalPadding) and math.max(0, options.verticalPadding) or 2
     state.minSize = PlainNumber(options.minSize) and math.max(1, options.minSize) or DEFAULT_MIN_TEXT_SIZE
     state.icon, state.iconGap = options.icon, PlainNumber(options.iconGap) and options.iconGap or DEFAULT_ICON_GAP
+    if options.baseWordWrap ~= nil then state.baseWordWrap = options.baseWordWrap end
+    if options.baseMaxLines ~= nil then state.baseMaxLines = options.baseMaxLines end
+    state.disableWrap = options.disableWrap == true
     state.active = options.enabled ~= false
     if not state.active then
         RestoreLabelFont(state); RestoreLabelLayout(state)
@@ -593,12 +607,25 @@ local function CaptureButtonTypography(btn, id)
         local path, size, flags = label:GetFont()
         if not path or not PlainNumber(size) then return end
         state = {label = label, originalPath = path, originalSize = size,
-            originalFlags = flags or ""}
+            originalFlags = flags or "", originalWordWrap = label.GetWordWrap and label:GetWordWrap(),
+            originalMaxLines = label.GetMaxLines and label:GetMaxLines()}
         btn.euiasTypographyState = state
         buttonTypography[btn] = true
     end
     state.owner = id
     return state
+end
+
+local function ApplyManagedWrapping(btn, managed, disabled)
+    local label = managed.label
+    local multiline = btn.euiasAllowMultiline or label.euiasAllowMultiline
+        or PlainNumber(managed.originalMaxLines) and managed.originalMaxLines > 1
+    local wordWrap, maxLines = managed.originalWordWrap, managed.originalMaxLines
+    if disabled and not multiline then wordWrap, maxLines = false, 1 end
+    if wordWrap ~= nil and label.GetWordWrap and label.SetWordWrap
+        and label:GetWordWrap() ~= wordWrap then label:SetWordWrap(wordWrap) end
+    if maxLines ~= nil and label.GetMaxLines and label.SetMaxLines
+        and label:GetMaxLines() ~= maxLines then label:SetMaxLines(maxLines) end
 end
 
 -- Apply one skin's fixed/automatic button type setting. Automatic mode never grows past the
@@ -614,6 +641,7 @@ function ns.ApplyButtonTypography(btn, id)
     pendingTypography[btn] = nil
     local label = managed.label
     local automatic = ns.AutoResizeButtonText and ns.AutoResizeButtonText(id) or false
+    local disableWrap = ns.ButtonTextWrappingDisabled and ns.ButtonTextWrappingDisabled(id) or false
     local mode, preferred = "default", 8
     if ns.ResolveButtonFontSize then mode, preferred = ns.ResolveButtonFontSize(id, managed.originalSize) end
     managed.native = not automatic and mode == "addon"
@@ -621,6 +649,7 @@ function ns.ApplyButtonTypography(btn, id)
         -- Fixed and native modes never enter the fitting engine. Besides avoiding measurements,
         -- this means Auto Resize OFF installs no SetText/size/show hooks and allocates no fit
         -- state. Addon's Font Size restores the captured font once, then relinquishes control.
+        ApplyManagedWrapping(btn, managed, disableWrap)
         local path, size, flags = label:GetFont()
         local wantedPath = managed.native and managed.originalPath or path or managed.originalPath
         local wantedSize = managed.native and managed.originalSize or preferred
@@ -643,6 +672,9 @@ function ns.ApplyButtonTypography(btn, id)
     options.basePath = currentPath or managed.originalPath
     options.baseSize = preferred
     options.baseFlags = currentFlags or managed.originalFlags
+    options.baseWordWrap = managed.originalWordWrap
+    options.baseMaxLines = managed.originalMaxLines
+    options.disableWrap = disableWrap
     options.minSize = minimum
     local state = ns.FitButtonText(btn, options)
     if state then

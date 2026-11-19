@@ -23,6 +23,8 @@ catalog entry. Set `buttons = true` when the skin owns buttons and should expose
 style. Add `typography = true` only when changing those button labels is safe; this adds global
 font inheritance, native-font opt-out and automatic-resize controls to its three-dot popup. Optional settings are registered with
 `ns.RegisterSkinSettings(id, sections, options)` rather than a new page.
+Typography-capable skins also inherit the global wrapping preference and expose the shared
+Default/Enabled/Disabled selector; do not add a skin-specific wrapping option.
 
 Custom settings are declarative and use EllesmereUI's cog row types (`toggle`, `slider`,
 `dropdown`, `colorpicker`, `input`, `button`). A simple `key`/`default` row is stored under
@@ -131,7 +133,8 @@ A window inside another skinned window (a tab panel) is `"controls"`.
   minimum (8 by default), without changing button geometry or font face/flags. Dynamic `SetText`, `SetWidth`,
   `SetHeight`, `SetSize`, `SetFont` and `SetFontObject` calls invalidate only that button; unchanged
   measurements are cached. Set `button.euiasAllowMultiline = true` (or the same field on its
-  FontString) for an intentionally wrapped label.
+  FontString) for an intentionally wrapped label. The shared wrapping preference never overrides
+  that marker or a label whose captured maximum line count is greater than one.
 - **Hooks:** `OnShow`, `OnClick`, `OnEnable` and `OnDisable` queue a refresh, so new and changed
   controls get styled. A `ScrollFrame` refreshes only its own subtree on scroll.
 - **Header bars:** a list with a `HeaderContainer` gets `S.SortHeaderBar`. Override it in

@@ -1,9 +1,33 @@
 local ADDON, ns = ...
 -- Hunter's Field Guide. What is skinned, the frame map and the reasoning: docs/skins/HuntersFieldGuide.md.
 local function DefineSkin()
--- Its windows by global name; the target panel and filter menu are backdrop panels, kept small.
-local WINDOWS = {FieldGuideFrame = "window", FieldGuideExport = "window", FieldGuideTargetPanel = "controls"}
+-- Its windows by global name; both movable panels use the EUI panel fill.
+local WINDOWS = {FieldGuideFrame = "window", FieldGuideExport = "window"}
+local TARGET_PANEL, TOAST_PANEL = "FieldGuideTargetPanel", "FieldGuideToast"
+local PANELS = {TARGET_PANEL, TOAST_PANEL}
+local NATIVE_BORDER = {"TopEdge", "BottomEdge", "LeftEdge", "RightEdge", "TopLeftCorner",
+    "TopRightCorner", "BottomLeftCorner", "BottomRightCorner"}
 local PORTRAIT_X, PORTRAIT_Y = 8, -8
+local popupPanels = setmetatable({}, {__mode = "k"})
+
+-- BackdropTemplate draws the parchment in Center and its ornate edge in eight named textures.
+-- Both panels replace it with the normal dark EUI panel fill. Native regions are alpha-locked so
+-- the addon cannot reveal them again. The configured border is owned by the movable panel and
+-- therefore follows every visibility, alpha, size, strata and anchor change.
+local function StylePopupPanel(H, S, frame, name)
+    if not H.Allowed(frame) then return end
+    popupPanels[frame] = true
+    if name == TARGET_PANEL then
+        S.Panel(frame, {noBorder = true})
+        H.Fade(frame.Center)
+    end
+    if name == TOAST_PANEL then
+        S.Panel(frame, {noBorder = true})
+        H.Fade(frame.Center)
+    end
+    for _, key in ipairs(NATIVE_BORDER) do H.Fade(frame[key]) end
+    if type(ns.ApplyConfiguredBorder) == "function" then ns.ApplyConfiguredBorder(frame) end
+end
 
 -- PortraitFrameTemplate seats its PortraitContainer partly outside the top-left corner. The
 -- journal's portrait and its home-button hit target are children/anchors of this container, so
@@ -26,7 +50,8 @@ ns.Skin("HuntersFieldGuide", {
     setup = function(C)
         local guide = _G.HuntersFieldGuide
         for _, method in ipairs({"CreateUI", "ToggleUI", "RefreshUI", "OpenBeast", "OpenAbility",
-            "OpenJournalSettings", "ShowModel", "ShowTargetPanel", "ShowExport", "UpdateFilterButton"}) do
+            "OpenJournalSettings", "ShowModel", "CreateTargetPanel", "ShowTargetPanel", "CreateToast",
+            "ShowExport", "UpdateFilterButton"}) do
             C.H.Hook(guide, method, C.refresh)
         end
     end,
@@ -38,6 +63,13 @@ ns.Skin("HuntersFieldGuide", {
                 C.AddRoot(f, mode)
             end
         end
+        for _, name in ipairs(PANELS) do
+            local panel = _G[name]
+            if panel then
+                StylePopupPanel(C.H, C.S, panel, name)
+                C.AddRoot(panel, "controls")
+            end
+        end
     end,
     visit = function(C, f, kind)
         local H, S = C.H, C.S
@@ -46,6 +78,9 @@ ns.Skin("HuntersFieldGuide", {
             if region.GetObjectType and region:GetObjectType() == "FontString" then H.Readable(region) end
         end
         local parent = f.GetParent and f:GetParent()
+        -- The panel's native regions, fill choice and configured outer border are handled above.
+        -- Claim the root so the generic backdrop rule cannot add a competing 1px edge.
+        if popupPanels[f] then return true end
         if kind == "Button" then
             if parent and parent.CloseButton == f then S.CloseButton(f); return true end
             -- Beast entries (spellbook item art), icon tabs and the portrait's home button keep the
@@ -58,7 +93,7 @@ ns.Skin("HuntersFieldGuide", {
                 if region.GetAtlas and region:GetAtlas() == "spellbook-list-backplate" then H.Fade(region) end
             end
         end
-        -- Icon slots, the filter menu, the target panel: flat 1px edge, their colours kept.
+        -- Icon slots and the filter menu: flat 1px edge, their colours kept.
         if kind == "Frame" and f.GetBackdrop and H.Once(f, "backdrop") then
             local backdrop = f:GetBackdrop()
             if backdrop and backdrop.bgFile then H.ThinBackdrop(f) end

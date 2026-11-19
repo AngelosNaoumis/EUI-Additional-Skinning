@@ -36,6 +36,27 @@ local function BorderFrames(frame)
     return pp, bd
 end
 
+local function ClaimBorderFrames(frame)
+    local pp, bd = BorderFrames(frame)
+    if pp and pp ~= frame then ns.OwnFrames[pp] = true end
+    if bd and bd ~= frame then ns.OwnFrames[bd] = true end
+end
+
+local function SameStyle(saved, style)
+    return saved.size == style.size and saved.px == style.px and saved.texture == style.texture
+        and saved.r == style.r and saved.g == style.g and saved.b == style.b and saved.a == style.a
+        and saved.offX == style.offX and saved.offY == style.offY
+        and saved.shiftX == style.shiftX and saved.shiftY == style.shiftY
+        and saved.sizeKey == style.sizeKey
+end
+
+local function RememberStyle(saved, style)
+    saved.size, saved.px, saved.texture = style.size, style.px, style.texture
+    saved.r, saved.g, saved.b, saved.a = style.r, style.g, style.b, style.a
+    saved.offX, saved.offY = style.offX, style.offY
+    saved.shiftX, saved.shiftY, saved.sizeKey = style.shiftX, style.shiftY, style.sizeKey
+end
+
 local function Paint(frame, colour)
     local E = _G.EllesmereUI
     if not E.SetBorderStyleColor then return end
@@ -46,9 +67,10 @@ end
 -- One configured border per unprotected decorative host. Repeated calls are read-only fast paths.
 function ns.ApplyConfiguredBorder(frame)
     if not Valid(frame) then return false end
-    if borders[frame] then return true end
     local E, style = _G.EllesmereUI, Style()
     if not style then return false end
+    local saved = borders[frame]
+    if saved and SameStyle(saved, style) then return true end
     local shown = frame.IsShown and frame:IsShown()
     local ok
     if E.ApplyBorderStyle then
@@ -59,8 +81,13 @@ function ns.ApplyConfiguredBorder(frame)
         ok = pcall(E.PP.CreateBorder, frame, style.r, style.g, style.b, style.a, style.size, "OVERLAY", 7)
     end
     if not ok then return false end
+    -- Textured styles use an unnamed child (shown by Frame Stack as Owner.<generated suffix>).
+    -- It is part of this service's one border, not addon content for the generic skin walker.
+    ClaimBorderFrames(frame)
     if shown == false then frame:Hide() end
-    borders[frame] = true
+    if not saved then saved = {}; borders[frame] = saved end
+    RememberStyle(saved, style)
+    if tints[frame] then Paint(frame, tints[frame]) end
     return true
 end
 

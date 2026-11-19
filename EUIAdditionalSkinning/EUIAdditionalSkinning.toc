@@ -3,7 +3,7 @@
 ## Notes: EllesmereUI skins for supported addons including BattlegroundEnemiesFixed, DBM timers, LagBuddy, GearQuest Forever and Naowh Forever.
 ## Author: AngelosNaoumis
 ## X-License: MIT
-## Version: 2.3.0
+## Version: 2.3.1
 ## Dependencies: EllesmereUI
 ## OptionalDeps: EllesmereUIBlizzardSkin, EllesmereUIActionBars, EllesmereUIFriends, EllesmereUIBags
 ## SavedVariables: EUIAdditionalSkinningDB

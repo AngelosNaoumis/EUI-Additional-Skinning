@@ -36,11 +36,16 @@ How to use these in a skin: [SKIN-DEVELOPMENT.md](../SKIN-DEVELOPMENT.md).
 | `ns.ButtonFontSelection(id)` | - | `Settings.lua:75` |
 | `ns.SetButtonFontSelection(id, value)` | - | `Settings.lua:83` |
 | `ns.ResolveButtonFontSize(id, originalSize)` | - | `Settings.lua:90` |
-| `ns.ConfiguredAutoResizeButtonText(id)` | - | `Settings.lua:110` |
-| `ns.AutoResizeButtonText(id)` | - | `Settings.lua:114` |
-| `ns.ButtonFontSelectionLocked(id)` | - | `Settings.lua:122` |
-| `ns.MinimumAutoFontSize(id)` | - | `Settings.lua:126` |
-| `ns.ResetSkinSettings(id)` | Clear only this skin's options. Legacy button-style/component tables are retained in their old locations for compatibility, but participate in the same reset action. | `Settings.lua:132` |
+| `ns.DisableButtonTextWrapping()` | Global wrapping opt-out, off when absent. | `Settings.lua:98` |
+| `ns.SetDisableButtonTextWrapping(on)` | Persist the global wrapping opt-out compactly. | `Settings.lua:103` |
+| `ns.ButtonTextWrappingSelection(id)` | A typography-capable skin's Default, Enabled or Disabled selection. | `Settings.lua:108` |
+| `ns.SetButtonTextWrappingSelection(id, value)` | Save one wrapping selection; invalid values become Default. | `Settings.lua:117` |
+| `ns.ButtonTextWrappingDisabled(id)` | Resolve Default through the global opt-out; ineligible skins always remain native. | `Settings.lua:124` |
+| `ns.ConfiguredAutoResizeButtonText(id)` | - | `Settings.lua:145` |
+| `ns.AutoResizeButtonText(id)` | - | `Settings.lua:149` |
+| `ns.ButtonFontSelectionLocked(id)` | - | `Settings.lua:157` |
+| `ns.MinimumAutoFontSize(id)` | - | `Settings.lua:161` |
+| `ns.ResetSkinSettings(id)` | Clear only this skin's options. Legacy button-style/component tables are retained in their old locations for compatibility, but participate in the same reset action. | `Settings.lua:167` |
 
 ## Skin.lua
 
@@ -71,15 +76,15 @@ How to use these in a skin: [SKIN-DEVELOPMENT.md](../SKIN-DEVELOPMENT.md).
 | `H.Action(f, keep)` | Flat button for backdrop-template buttons, keeping the named regions. | `Widgets.lua:236` |
 | `H.LegacySlider(f, keep)` | Classic Slider scroll bar: thin track, accent thumb, page arrows. | `Widgets.lua:251` |
 | `ns.CreateSoftSkin(S, module, borderless)` | Opt-in treatment for owned addon controls. Keep EUI primitives and their fills/hover states; soften only their newly created pixel-border containers. borderless(f): true for controls whose soft edge (and square-icon edge) stays hidden. | `Widgets.lua:288` |
-| `ns.FitButtonText(button, options)` | Set or fit a styled button label without changing its geometry. Options: padding (horizontal, default 8), verticalPadding (default 2), minSize (default 8), icon, iconGap, basePath, baseSize, baseFlags and enabled (false applies baseSize without measuring). | `Widgets.lua:497` |
-| `ns.ButtonStyle(id)` | The style for a skin's buttons (id), or the default (no id). | `Widgets.lua:569` |
-| `ns.SkinButtonSetting(id)` | A skin's own setting: "gamemenu", "window", or "default" (follows the default style). | `Widgets.lua:576` |
-| `ns.ApplyButtonTypography(btn, id)` | Apply one skin's fixed/automatic button type setting. Automatic mode never grows past the target's original size; fixed mode may do so only when the user explicitly chooses it. | `Widgets.lua:606` |
-| `ns.RefreshInheritedButtonTypography()` | A global default change touches only buttons that actually inherit it. Explicit sizes and the native-font mode do no work and retain their current fonts. | `Widgets.lua:666` |
-| `ns.RefreshButtonTypography(id)` | Repaint only the already-owned buttons of one skin (or all skins) after a typography change. | `Widgets.lua:676` |
-| `ns.FlushButtonTypography()` | Apply only protected button-font updates that were skipped in combat. Core calls this on the existing PLAYER_REGEN_ENABLED event, so no typography-specific event frame or polling exists. | `Widgets.lua:685` |
-| `ns.StyledFacade(S, id)` | The facade skin id receives, with S.Button drawing that skin's button style afterwards. | `Widgets.lua:741` |
-| `ns.RefreshButtonStyle(id)` | Re-draws every styled button in the current style (the Skins page's Button style setting). | `Widgets.lua:771` |
+| `ns.FitButtonText(button, options)` | Set or fit a styled button label without changing its geometry. Options: padding (horizontal, default 8), verticalPadding (default 2), minSize (default 8), icon, iconGap, basePath, baseSize, baseFlags, baseWordWrap, baseMaxLines, disableWrap and enabled (false applies baseSize without measuring). | `Widgets.lua:508` |
+| `ns.ButtonStyle(id)` | The style for a skin's buttons (id), or the default (no id). | `Widgets.lua:583` |
+| `ns.SkinButtonSetting(id)` | A skin's own setting: "gamemenu", "window", or "default" (follows the default style). | `Widgets.lua:590` |
+| `ns.ApplyButtonTypography(btn, id)` | Apply one skin's fixed/automatic button type setting. Automatic mode never grows past the target's original size; fixed mode may do so only when the user explicitly chooses it. | `Widgets.lua:633` |
+| `ns.RefreshInheritedButtonTypography()` | A global default change touches only buttons that actually inherit it. Explicit sizes and the native-font mode do no work and retain their current fonts. | `Widgets.lua:698` |
+| `ns.RefreshButtonTypography(id)` | Repaint only the already-owned buttons of one skin (or all skins) after a typography change. | `Widgets.lua:708` |
+| `ns.FlushButtonTypography()` | Apply only protected button-font updates that were skipped in combat. Core calls this on the existing PLAYER_REGEN_ENABLED event, so no typography-specific event frame or polling exists. | `Widgets.lua:717` |
+| `ns.StyledFacade(S, id)` | The facade skin id receives, with S.Button drawing that skin's button style afterwards. | `Widgets.lua:773` |
+| `ns.RefreshButtonStyle(id)` | Re-draws every styled button in the current style (the Skins page's Button style setting). | `Widgets.lua:803` |
 
 ## Helpers.lua
 

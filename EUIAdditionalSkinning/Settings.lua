@@ -94,6 +94,41 @@ function ns.ResolveButtonFontSize(id, originalSize)
     return "fixed", selection
 end
 
+-- Global wrapping opt-out, off when absent.
+function ns.DisableButtonTextWrapping()
+    return ns.DB().disableButtonTextWrapping == true
+end
+
+-- Persist the global wrapping opt-out compactly.
+function ns.SetDisableButtonTextWrapping(on)
+    ns.DB().disableButtonTextWrapping = on and true or nil
+end
+
+-- A typography-capable skin's Default, Enabled or Disabled selection.
+function ns.ButtonTextWrappingSelection(id)
+    if not ns.SupportsButtonTypography(id) then return "default" end
+    local saved = Saved(id)
+    local value = saved and saved.buttonTextWrapping
+    if value == "enabled" or value == "disabled" then return value end
+    return "default"
+end
+
+-- Save one wrapping selection; invalid values become Default.
+function ns.SetButtonTextWrappingSelection(id, value)
+    if not ns.SupportsButtonTypography(id) then return end
+    if value ~= "enabled" and value ~= "disabled" then value = "default" end
+    ns.SetSkinSetting(id, "buttonTextWrapping", value, "default")
+end
+
+-- Resolve Default through the global opt-out; ineligible skins always remain native.
+function ns.ButtonTextWrappingDisabled(id)
+    if not ns.SupportsButtonTypography(id) then return false end
+    local selection = ns.ButtonTextWrappingSelection(id)
+    if selection == "enabled" then return false end
+    if selection == "disabled" then return true end
+    return ns.DisableButtonTextWrapping()
+end
+
 -- Configured auto-resize is what the options panel displays. Active auto-resize is snapshotted at
 -- load so choosing Reload Later cannot partially change already-created or newly-created buttons.
 local activeAutoResize, activeAutoKnown = {}, {}

@@ -130,6 +130,16 @@ local function DefaultFontSizeRow()
         end}
 end
 
+local function DisableButtonTextWrappingRow()
+    return {type = "toggle", text = "Disable Button Text Wrapping",
+        tooltip = "Keep eligible skinned button labels on one line. Per-skin settings may override this default.",
+        getValue = ns.DisableButtonTextWrapping,
+        setValue = function(on)
+            ns.SetDisableButtonTextWrapping(on)
+            ns.RefreshButtonTypography()
+        end}
+end
+
 -- Convert a registered declarative row to EllesmereUI's native cog-row schema. Existing Naowh
 -- rows retain their getValue/setValue SavedVariables; new rows may use key/default directly.
 local function CogRow(entry, setting)
@@ -178,6 +188,17 @@ local function PopupSections(entry)
                 get = function() return ns.ButtonFontSelection(entry.id) end,
                 set = function(value)
                     ns.SetButtonFontSelection(entry.id, value)
+                    ns.RefreshButtonTypography(entry.id)
+                    local EUI = _G.EllesmereUI
+                    if EUI.RefreshPage then EUI:RefreshPage() end
+                end},
+            {type = "dropdown", label = "Button Text Wrapping",
+                values = {default = "Default", enabled = "Enabled", disabled = "Disabled"},
+                order = {"default", "enabled", "disabled"},
+                tooltip = "Default inherits Disable Button Text Wrapping. Enabled preserves the addon's wrapping; Disabled keeps labels on one line.",
+                get = function() return ns.ButtonTextWrappingSelection(entry.id) end,
+                set = function(value)
+                    ns.SetButtonTextWrappingSelection(entry.id, value)
                     ns.RefreshButtonTypography(entry.id)
                     local EUI = _G.EllesmereUI
                     if EUI.RefreshPage then EUI:RefreshPage() end
@@ -259,6 +280,7 @@ local function BuildSkins(_, parent, y)
         end}); y = y - h
     -- Button style: the default here; each addon's own choice is in its cog. Live, no reload.
     _, h = W:DualRow(parent, y, ButtonDefaultRow(), DefaultFontSizeRow()); y = y - h
+    _, h = W:DualRow(parent, y, DisableButtonTextWrappingRow()); y = y - h
     _, h = W:Spacer(parent, y, 10); y = y - h
     _, h = W:SectionHeader(parent, "SKINS", y); y = y - h
     for _, entry in ipairs(ns.skinCatalog) do

@@ -28,12 +28,25 @@ assert(ns.SkinSetting('FutureSkin', 'amount', 8) == 12, 'skin settings are coupl
 ns.SetSkinSetting('FutureSkin', 'amount', 8, 8)
 assert(not EUIAdditionalSkinningDB.skinSettings.FutureSkin, 'default did not remove the per-skin table')
 
-EUIAdditionalSkinningDB.skinSettings.FutureSkin = {buttonFontSize = 'bad', autoResizeButtonText = 'yes',
+EUIAdditionalSkinningDB.skinSettings.FutureSkin = {buttonFontSize = 'bad', buttonTextWrapping = 'bad', autoResizeButtonText = 'yes',
     minimumAutoFontSize = 500}
 assert(ns.ButtonFontSelection('FutureSkin') == 'default' and not ns.AutoResizeButtonText('FutureSkin')
     and ns.MinimumAutoFontSize('FutureSkin') == 32, 'invalid typography values were not normalized safely')
 assert(ns.DefaultButtonFontSize() == 8 and ns.ResolveButtonFontSize('FutureSkin', 12) == 'default',
     'global typography defaults are wrong')
+assert(not ns.DisableButtonTextWrapping() and ns.ButtonTextWrappingSelection('FutureSkin') == 'default'
+    and not ns.ButtonTextWrappingDisabled('FutureSkin'), 'button wrapping defaults are wrong')
+ns.SetDisableButtonTextWrapping(true)
+assert(ns.DisableButtonTextWrapping() and ns.ButtonTextWrappingDisabled('FutureSkin'),
+    'global wrapping disable was not inherited')
+ns.SetButtonTextWrappingSelection('FutureSkin', 'enabled')
+assert(ns.ButtonTextWrappingSelection('FutureSkin') == 'enabled'
+    and not ns.ButtonTextWrappingDisabled('FutureSkin'), 'per-skin Enabled did not override the global setting')
+ns.SetDisableButtonTextWrapping(false)
+ns.SetButtonTextWrappingSelection('FutureSkin', 'disabled')
+assert(ns.ButtonTextWrappingDisabled('FutureSkin'), 'per-skin Disabled did not force one-line labels')
+ns.SetButtonTextWrappingSelection('FutureSkin', 'default')
+assert(not ns.ButtonTextWrappingDisabled('FutureSkin'), 'Default did not resume global inheritance')
 ns.SetDefaultButtonFontSize(10)
 local mode, size = ns.ResolveButtonFontSize('FutureSkin', 12)
 assert(mode == 'default' and size == 10 and EUIAdditionalSkinningDB.defaultButtonFontSize == 10,
@@ -50,6 +63,8 @@ ns.SetButtonFontSelection('FutureSkin', 'default')
 assert(ns.ButtonFontSelection('FutureSkin') == 'default', 'Default selection was not stored compactly')
 assert(not ns.SupportsButtonTypography('NaowhForever') and not ns.AutoResizeButtonText('NaowhForever'),
     'Naowh Forever was not excluded by the typography capability')
+assert(ns.ButtonTextWrappingSelection('NaowhForever') == 'default'
+    and not ns.ButtonTextWrappingDisabled('NaowhForever'), 'Naowh Forever exposes managed wrapping')
 EUIAdditionalSkinningDB.buttonStyles = {FutureSkin = 'gamemenu', OtherSkin = 'window'}
 EUIAdditionalSkinningDB.skinFeatures = {FutureSkin = {part = false}, OtherSkin = {part = false}}
 ns.ResetSkinSettings('FutureSkin')

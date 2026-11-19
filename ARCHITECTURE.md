@@ -106,8 +106,9 @@ the modules load. That replacement is the addon's one exception to "post-hooks o
 `EUIAdditionalSkinningDB`: `disabled`, `skins[id]`, `naowh` (the Naowh keys and the `manual`
 border table, validated by `Integrations/NaowhForever/Config.lua`), `euiWindows`, `euiBags`,
 `debug` (Debug Mode), `buttonStyle` (`"gamemenu"`; unset = EllesmereUI windows), `buttonStyles[id]`
-(per skin; unset = the default), `defaultButtonFontSize` (unset = 8), `skinSettings[id]`
-(declarative values, including per-skin typography selection and auto-resize preference),
+(per skin; unset = the default), `defaultButtonFontSize` (unset = 8),
+`disableButtonTextWrapping` (unset = false), `skinSettings[id]` (declarative values, including
+per-skin font size, wrapping selection and auto-resize preference),
 and `dumps` (dev tools). Existing `buttonStyles`, `skinFeatures` and `naowh` keys remain in their
 original locations for SavedVariables compatibility.
 
@@ -134,6 +135,12 @@ font properties and then relinquishes control so later addon font changes remain
 is an explicit fixed override. Existing numeric 8 values remain explicit rather than being
 silently converted. Naowh Forever and buttonless skins have no typography capability.
 
+The global wrapping opt-out is off by default. A typography-capable skin may inherit it or choose
+Enabled/Disabled explicitly. Fixed/native mode only compares and restores the captured
+`WordWrap`/`MaxLines` values; it does not enter the fitting engine. Active automatic fitting uses
+the same captured layout and respects the selection. Controls marked for intentional multiline
+text, or captured with more than one maximum line, are always preserved.
+
 Optional automatic resizing is off by default and its active state is snapshotted at load. A saved
 toggle therefore cannot partially activate before the requested reload. When active it ignores the
 fixed selection, starts at the original addon size, shrinks only overflowing single-line text toward
@@ -143,8 +150,8 @@ existing combat-end event. When automatic resizing is inactive, fixed/native app
 enters the fit engine: it installs no fit hooks, creates no fit state, and performs no text
 measurement. There is no global Blizzard-button hook, scan, timer or `OnUpdate`.
 
-`Borders.lua` owns the target-independent configured-border lifecycle used by BGE and DBM: one weak
-owner cache, colour overrides, and horizontal/vertical dividers. The Naowh runtime supplies the
+`Borders.lua` owns the target-independent configured-border lifecycle used by HFG, BGE and DBM: one
+weak owner/style cache, in-place configured-style updates, colour overrides, and horizontal/vertical dividers. The Naowh runtime supplies the
 resolved action-bar/manual style but neither Naowh Forever's installation, enable state nor runtime
 initialization gates the shared service. Reading the default style for another integration does not
 create Naowh SavedVariables.

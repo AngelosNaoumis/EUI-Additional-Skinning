@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.3.1 - 2026-11-19
+
+- Added global **Disable Button Text Wrapping** (off by default) and per-skin
+  **Default/Enabled/Disabled** inheritance for the same typography-capable skins. The fixed-mode
+  path still performs no fitting, measurement or fit-hook work; intentional multiline stays native.
+- Updated Hunter's Field Guide's target and notification panels with the dark EUI panel fill and
+  one configured border. Native parchment and ornate edges stay suppressed across reopening and
+  reuse, while movement, dismissal, notification timing, content and dimensions remain unchanged.
+
 ## 2.3.0 - 2026-11-18
 
 - Replaced expanded per-skin controls with one enable toggle and EllesmereUI's native three-dot

@@ -69,8 +69,14 @@ assert(EUIAdditionalSkinningDB.debug == nil and not ns.profiling and #popups == 
 -- The dropdown switches live, both ways, without a reload.
 local styleRow = assert(byText['Default button style'], 'no Default button style setting on the Skins page')
 local globalFontRow = assert(byText['Default Button Font Size'], 'no global default button font size')
+local globalWrappingRow = assert(byText['Disable Button Text Wrapping'], 'no global wrapping toggle')
 assert(globalFontRow.getValue() == 8 and globalFontRow.min == 4 and globalFontRow.max == 32,
     'global font default or range is wrong')
+assert(not globalWrappingRow.getValue(), 'global wrapping disable is on by default')
+globalWrappingRow.setValue(true)
+assert(globalWrappingRow.getValue() and EUIAdditionalSkinningDB.disableButtonTextWrapping,
+    'global wrapping toggle did not persist or apply live')
+globalWrappingRow.setValue(false)
 assert(styleRow.getValue() == 'window', 'Button style not EllesmereUI windows by default')
 local borders, ffd = {}, {}
 EllesmereUI._applyBlizzardConfiguredBorder = function(owner, prefix, legacy) borders[#borders + 1] = {owner, prefix, legacy} end
@@ -249,17 +255,19 @@ local altoTypography = CogRows('Altoholic')
 local attuneTypography = CogRows('Attune')
 for _, popup in ipairs({altoTypography, attuneTypography}) do
     assert(popup['Button Font Size'].get() == 'default' and not popup['Auto Resize Button Text'].get()
+        and popup['Button Text Wrapping'].get() == 'default'
         and popup['Minimum Auto Font Size'].get() == 8, 'typography defaults are wrong')
     assert(not popup['Button Font Size'].disabled(), 'font dropdown disabled while auto resize is off')
     assert(popup['Minimum Auto Font Size'].disabled(), 'minimum size is enabled while auto resize is off')
 end
 local typographyPopups = #popups
 altoTypography['Button Font Size'].set(11)
+altoTypography['Button Text Wrapping'].set('disabled')
 altoTypography['Auto Resize Button Text'].set(true)
 altoTypography['Minimum Auto Font Size'].set(6)
 T.Flush()
 assert(ns.ButtonFontSelection('Altoholic') == 11 and ns.ConfiguredAutoResizeButtonText('Altoholic')
-    and not ns.AutoResizeButtonText('Altoholic')
+    and not ns.AutoResizeButtonText('Altoholic') and ns.ButtonTextWrappingDisabled('Altoholic')
     and ns.MinimumAutoFontSize('Altoholic') == 6, 'Altoholic typography did not persist')
 assert(ns.ButtonFontSelection('Attune') == 'default' and not ns.AutoResizeButtonText('Attune'),
     'one skin typography changed another')
@@ -269,7 +277,8 @@ assert(altoTypography['Button Font Size'].disabled() and not altoTypography['Min
 assert(not CogRows('DeadlyBossMods')['Button Font Size'], 'buttonless DBM exposes typography controls')
 local naowhTypography = CogRows('NaowhForever')
 assert(not naowhTypography['Button Font Size'] and not naowhTypography['Auto Resize Button Text']
-    and not naowhTypography['Minimum Auto Font Size'], 'Naowh exposes shared typography controls')
+    and not naowhTypography['Button Text Wrapping'] and not naowhTypography['Minimum Auto Font Size'],
+    'Naowh exposes shared typography controls')
 
 SlashCmdList.EUIADDITIONALSKINNING('options')
 assert(opened == T.ADDON, '/eas options does not open the page')

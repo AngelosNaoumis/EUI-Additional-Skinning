@@ -2,10 +2,12 @@
 local T = dofile('tests/support.lua')
 EUIAdditionalSkinningDB = {skinSettings = {Attune = {
     buttonFontSize = 12, autoResizeButtonText = true, minimumAutoFontSize = 8,
-}}}
+    buttonTextWrapping = 'disabled',
+}, ForeverDungeonJournal = {autoResizeButtonText = true, buttonTextWrapping = 'enabled'}}}
 local ns = T.Load()
 local S = ns.StyledFacade(T.S, 'Altoholic')
 local AutoS = ns.StyledFacade(T.S, 'Attune')
+local WrappingAutoS = ns.StyledFacade(T.S, 'ForeverDungeonJournal')
 
 local function Upvalue(fn, wanted)
     local index = 1
@@ -50,6 +52,17 @@ assert(select(2, fixedDefaultLabel:GetFont()) == 8 and fixedDefault.euiasTextFit
     and not fixedDefault.euiasTextFitOverflow, 'default button size is not fixed at 8 with fitting off')
 assert(not fittedButtons[fixedDefault] and not fittedLabels[fixedDefaultLabel] and disabledMeasurements == 0,
     'Auto Resize OFF entered the fitting engine or measured text')
+assert(fixedDefaultLabel:GetWordWrap() and fixedDefaultLabel:GetMaxLines() == 0,
+    'wrapping changed while the global opt-out was off')
+ns.SetDisableButtonTextWrapping(true); ns.RefreshButtonTypography()
+assert(not fixedDefaultLabel:GetWordWrap() and fixedDefaultLabel:GetMaxLines() == 1
+    and disabledMeasurements == 0 and not fittedButtons[fixedDefault],
+    'wrapping disable entered the fitting engine or failed in fixed mode')
+ns.SetButtonTextWrappingSelection('Altoholic', 'enabled'); ns.RefreshButtonTypography('Altoholic')
+assert(fixedDefaultLabel:GetWordWrap() and fixedDefaultLabel:GetMaxLines() == 0,
+    'per-skin Enabled did not restore the captured native layout')
+ns.SetButtonTextWrappingSelection('Altoholic', 'default'); ns.SetDisableButtonTextWrapping(false)
+ns.RefreshButtonTypography('Altoholic')
 fixedDefaultLabel:SetText('A different and much longer localized label')
 fixedDefault:SetSize(45, 18); fixedDefault:Hide(); fixedDefault:Show(); S.Button(fixedDefault)
 assert(disabledMeasurements == 0 and select(2, fixedDefaultLabel:GetFont()) == 8
@@ -77,7 +90,8 @@ local shortWidth, shortHeight = short:GetSize()
 AutoS.Button(short)
 local path, size, flags = shortLabel:GetFont()
 assert(path == 'native' and size == 12 and flags == 'OUTLINE', 'short label did not use its preferred size')
-assert(shortLabel:GetWordWrap() and shortLabel:GetMaxLines() == 0, 'short label layout was needlessly changed')
+assert(not shortLabel:GetWordWrap() and shortLabel:GetMaxLines() == 1,
+    'explicit wrapping disable did not keep a short automatic label on one line')
 assert(shortWidth == short:GetWidth() and shortHeight == short:GetHeight(), 'button geometry changed')
 assert(({shortLabel:GetTextColor()})[1] == 0.2 and ({shortLabel:GetTextColor()})[4] == 0.8,
     'button label colour changed')
@@ -88,15 +102,15 @@ path, size, flags = longLabel:GetFont()
 assert(path == 'native' and size == 10 and flags == 'OUTLINE', 'long label did not shrink to fit')
 assert(long.euiasTextFitSize == 10 and not long.euiasTextFitOverflow, 'fit result was not recorded')
 local stableWrites = longLabel.fontWrites
-AutoS.Button(long); ns.FitButtonText(long)
+AutoS.Button(long); AutoS.Button(long)
 assert(longLabel:GetFont() == 'native' and select(2, longLabel:GetFont()) == 10,
     'repeated application cumulatively shrank the label')
 assert(longLabel.fontWrites == stableWrites, 'unchanged label was recalculated')
 
 longLabel:SetText('OK')
 assert(select(2, longLabel:GetFont()) == 12, 'short dynamic label did not regain intended size')
-assert(longLabel:GetWordWrap() and longLabel:GetMaxLines() == 0,
-    'short dynamic label did not regain its original layout')
+assert(not longLabel:GetWordWrap() and longLabel:GetMaxLines() == 1,
+    'short dynamic label did not retain the explicit one-line layout')
 longLabel:SetText('Localized long label')
 assert(select(2, longLabel:GetFont()) == 10, 'long dynamic label did not refit')
 assert(not longLabel:GetWordWrap() and longLabel:GetMaxLines() == 1, 'long label was allowed to wrap')
@@ -107,6 +121,12 @@ long:SetWidth(220)
 assert(longLabel.fontWrites == stableWrites, 'unchanged available width rewrote the font')
 long:SetWidth(140)
 assert(select(2, longLabel:GetFont()) == 10, 'narrower button did not refit')
+
+local wrappingLong, wrappingLongLabel = Button('Localized long label', 140)
+WrappingAutoS.Button(wrappingLong)
+assert(select(2, wrappingLongLabel:GetFont()) == 10 and wrappingLongLabel:GetWordWrap()
+    and wrappingLongLabel:GetMaxLines() == 0,
+    'Enabled did not preserve native wrapping while automatic size fitting remained active')
 
 -- Applying the shared EUI font after an earlier fit must use the intended 12px size as its base,
 -- not the already-shrunk size. This is the normal S.Button then S.Font skin path.

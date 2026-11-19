@@ -45,11 +45,11 @@ python -c "import lupa.lua51 as l; r = l.LuaRuntime(); r.execute(\"table.unpack 
 | `tests/skin_spec.lua` | Framework | `ns.Skin`: roots and modes, passes, combat, visibility, events, gates, `ace` |
 | `tests/helpers_spec.lua` | Helpers | Every `Helpers.lua` building block |
 | `tests/widgets_spec.lua` | Scanner | `H.Scan` scroll scoping, discovery, exclusions, fades |
-| `tests/button_text_spec.lua` | Shared buttons | Global inheritance, explicit/native modes, reload-stable fitting, original-size cap, dynamic labels/dimensions, combat deferral and idempotence |
-| `tests/settings_spec.lua` | Settings | Declarative registration, defaults, validation, per-skin isolation, legacy compatibility and reset |
+| `tests/button_text_spec.lua` | Shared buttons | Global/per-skin wrapping, fixed-mode zero-fit path, explicit/native modes, reload-stable fitting, original-size cap, dynamic labels/dimensions, combat deferral and idempotence |
+| `tests/settings_spec.lua` | Settings | Declarative registration, typography/wrapping inheritance, defaults, validation, per-skin isolation, legacy compatibility and reset |
 | `tests/deadlybossmods_spec.lua` | Skin spec | Unified both/left/right/no-icon geometry, dividers, pooled reuse, style transitions, native-edge suppression, disabled and protected paths |
 | `tests/battlegroundenemiesfixed_spec.lua` | Skin spec | Native role/raid/castbars, immediate combat-safe icon/highlight updates, operation-level protected deferral, recycling and idempotence |
-| `tests/borders_spec.lua` | Shared borders | Target-addon independence, one-owner lifecycle, isolated colour overrides and normal-colour restoration |
+| `tests/borders_spec.lua` | Shared borders | Target-addon independence, one-owner lifecycle, in-place style updates, internal-frame ownership, isolated colour overrides and normal-colour restoration |
 | `tests/lagbuddy_spec.lua` | Skin spec | Comprehensive main/lazy-dialog styling, combat deferral, stateful controls, stable reopen, metric isolation and disabled path |
 | `tests/core_spec.lua` | Core | TOC order, lazy activation, EUI toggles for enabled targets, GUID enable state, no old-addon guard or import, combat-end pass only after a deferral, `/eas` and `/easnf` only (no legacy commands, one handler each), Debug Mode help |
 | `tests/loader_spec.lua` | Loader | Factories per enabled, loaded target; combat; EUI toggle; failure isolation |
