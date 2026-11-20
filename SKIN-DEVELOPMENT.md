@@ -352,5 +352,9 @@ end,
    Lint covers ASCII, tabs, trailing whitespace, `SetScript` in skins, and a doc and spec for every skin.
 2. Check in game: both EUI styles and the Classic/Blizzard look, combat, `/reload`, and each new
    skin's off/on switch on the Additional Skinning options page.
-3. `CHANGELOG.md` entry; bump `## Version` in the TOC and `ns.VERSION` in `Core.lua` together.
-4. `python scripts/package.py`: builds and verifies `dist/EUIAdditionalSkinning-<version>.zip`.
+3. Review release documentation before packaging. Update `README.md` whenever supported addons,
+   settings, requirements, commands, installation, or user-visible behavior change, and update every
+   affected skin, API, architecture, testing, or development document. Explicitly confirm that
+   unchanged documentation was reviewed and remains accurate.
+4. Add the `CHANGELOG.md` entry; bump `## Version` in the TOC and `ns.VERSION` in `Core.lua` together.
+5. `python scripts/package.py`: builds and verifies `dist/EUIAdditionalSkinning-<version>.zip`.
