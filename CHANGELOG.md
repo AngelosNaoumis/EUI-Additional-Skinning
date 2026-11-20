@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.3.2 - 2026-11-20
+
+- Added source-verified Angler's Field Guide skinning for its classic/Forever journal, export
+  window, filter menu, icon slots and singleton catch toast. The toast uses the configured shared
+  border and dark EUI fill; catch entries, tabs, maps, controls, timing and click behavior are kept.
+
 ## 2.3.1 - 2026-11-19
 
 - Added global **Disable Button Text Wrapping** (off by default) and per-skin

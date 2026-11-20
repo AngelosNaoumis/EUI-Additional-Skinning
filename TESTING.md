@@ -59,7 +59,7 @@ python -c "import lupa.lua51 as l; r = l.LuaRuntime(); r.execute(\"table.unpack 
 | `tests/dev_spec.lua` | Dev tools | Debug Mode gate (off: no work), `/eas dump`, `probe` (secret-safe) and `perf` |
 | `tests/limits_spec.lua` | Headroom | Every skin handler at or under 50 upvalues |
 | `tests/auctionator_*_spec.lua` | Skin specs | Auctionator; they keep their own fakes |
-| `tests/<addon>_spec.lua` (Altoholic, Attune, BugSack, ForeverDungeonJournal, GearQuestForever, HuntersFieldGuide, WhatsTraining, OneForAll x2) | Skin specs | One per skin; OneForAll has two (source-shaped and Forever API) |
+| `tests/<addon>_spec.lua` (Altoholic, AnglersFieldGuide, Attune, BugSack, ForeverDungeonJournal, GearQuestForever, HuntersFieldGuide, WhatsTraining, OneForAll x2) | Skin specs | One per skin; OneForAll has two (source-shaped and Forever API) |
 | `tests/test_*.py` | Tool tests | `read_dump.py` round trip; the docs' Lua examples; scripts compile and `new_skin.py` output passes the suite |
 
 ## `tests/support.lua`

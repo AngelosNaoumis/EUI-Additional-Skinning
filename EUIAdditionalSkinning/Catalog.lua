@@ -4,6 +4,7 @@ local ADDON, ns = ...
 -- targets: the addon folders that count as installed. integration: not a frame skin (no skin file;
 -- Integrations/<Id>/ installs it).
 ns.skinCatalog = {
+    {id = "AnglersFieldGuide", label = "Angler's Field Guide", targets = {"AnglersFieldGuide"}, buttons = true, typography = true},
     {id = "Altoholic", label = "Altoholic", targets = {"Altoholic"}, buttons = true, typography = true},
     {id = "Attune", label = "Attune", targets = {"Attune"}, buttons = true, typography = true},
     {id = "Auctionator", label = "Auctionator", targets = {"Auctionator"}, buttons = true, typography = true},

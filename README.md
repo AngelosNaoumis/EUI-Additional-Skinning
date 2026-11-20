@@ -13,6 +13,7 @@ Skins some EllesmereUI functions and additionally skins the addons below.
 | [Attune](docs/skins/Attune.md) | Windows, graph nodes, tree rows. |
 | [BugSack](docs/skins/BugSack.md) | Window, tabs, buttons. |
 | [GearQuest Forever](docs/skins/GearQuestForever.md) | Log window and simulate dialog: EllesmereUI shell, readable text, thin panel edges, menus and controls; hunt rows, tabs, icons and rarity colours kept. |
+| [Angler's Field Guide](docs/skins/AnglersFieldGuide.md) | Fishing journal and export window: EllesmereUI shell, readable text, panels and controls; catch entries, tabs, map content and icons kept. |
 | [Hunter's Field Guide](docs/skins/HuntersFieldGuide.md) | Journal and export window: EllesmereUI shell, readable text, panels and controls; beast entries, tabs and icons kept. |
 | [BattlegroundEnemiesFixed](docs/skins/BattlegroundEnemiesFixed.md) | Enemy unit-frame borders, Health/Power dividers, visible trinket/objective/respawn and CC/DR icon borders; target/focus recolour the existing outer border. Role, raid-target and castbar visuals remain native. |
 | [Deadly Boss Mods](docs/skins/DeadlyBossMods.md) | Timer bars only: one configured border around each pooled bar and its visible icons, with optional matching dividers; warnings and DBM options are untouched. |
